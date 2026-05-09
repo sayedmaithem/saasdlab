@@ -29,6 +29,10 @@ export type Database = {
           name: string;
           slug: string;
           timezone: string;
+          phone: string | null;
+          address: string | null;
+          currency: string;
+          logo_file_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -37,6 +41,10 @@ export type Database = {
           name: string;
           slug: string;
           timezone?: string;
+          phone?: string | null;
+          address?: string | null;
+          currency?: string;
+          logo_file_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -659,12 +667,15 @@ export type Database = {
           clinic_id: string | null;
           invoice_number: string;
           status: string;
+          issue_date: string;
+          due_date: string | null;
           subtotal: number;
           discount: number;
           tax: number;
           total: number;
           paid_amount: number;
           remaining_balance: number;
+          notes: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -675,15 +686,51 @@ export type Database = {
           clinic_id?: string | null;
           invoice_number: string;
           status?: string;
+          issue_date?: string;
+          due_date?: string | null;
           subtotal?: number;
           discount?: number;
           tax?: number;
           paid_amount?: number;
           remaining_balance?: number;
+          notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["invoices"]["Insert"]>;
+        Relationships: [];
+      };
+      invoice_items: {
+        Row: {
+          id: string;
+          lab_id: string;
+          invoice_id: string;
+          case_id: string | null;
+          case_item_id: string | null;
+          description: string;
+          work_type: string | null;
+          material: string | null;
+          quantity: number;
+          unit_price: number;
+          discount: number;
+          line_total: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          invoice_id: string;
+          case_id?: string | null;
+          case_item_id?: string | null;
+          description: string;
+          work_type?: string | null;
+          material?: string | null;
+          quantity?: number;
+          unit_price?: number;
+          discount?: number;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["invoice_items"]["Insert"]>;
         Relationships: [];
       };
       payments: {
@@ -692,18 +739,140 @@ export type Database = {
           lab_id: string;
           invoice_id: string | null;
           doctor_id: string | null;
+          clinic_id: string | null;
           amount: number;
+          method: "cash" | "bank_transfer" | "card" | "other" | "wallet" | "adjustment";
+          reference: string | null;
           paid_at: string;
+          recorded_by: string | null;
+          notes: string | null;
         };
         Insert: {
           id?: string;
           lab_id: string;
           invoice_id?: string | null;
           doctor_id?: string | null;
+          clinic_id?: string | null;
           amount: number;
+          method?: "cash" | "bank_transfer" | "card" | "other" | "wallet" | "adjustment";
+          reference?: string | null;
           paid_at?: string;
+          recorded_by?: string | null;
+          notes?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["payments"]["Insert"]>;
+        Relationships: [];
+      };
+      payment_allocations: {
+        Row: {
+          id: string;
+          lab_id: string;
+          payment_id: string;
+          invoice_id: string;
+          amount: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          payment_id: string;
+          invoice_id: string;
+          amount: number;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["payment_allocations"]["Insert"]>;
+        Relationships: [];
+      };
+      deliveries: {
+        Row: {
+          id: string;
+          lab_id: string;
+          case_id: string;
+          doctor_id: string | null;
+          clinic_id: string | null;
+          assigned_to: string | null;
+          driver_id: string | null;
+          delivery_person_id: string | null;
+          status: ProductionStage;
+          delivery_status: string;
+          address: string | null;
+          scheduled_at: string | null;
+          out_at: string | null;
+          delivered_at: string | null;
+          recipient_name: string | null;
+          failure_reason: string | null;
+          proof_file_id: string | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          case_id: string;
+          doctor_id?: string | null;
+          clinic_id?: string | null;
+          assigned_to?: string | null;
+          driver_id?: string | null;
+          delivery_person_id?: string | null;
+          status?: ProductionStage;
+          delivery_status?: string;
+          address?: string | null;
+          scheduled_at?: string | null;
+          out_at?: string | null;
+          delivered_at?: string | null;
+          recipient_name?: string | null;
+          failure_reason?: string | null;
+          proof_file_id?: string | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["deliveries"]["Insert"]>;
+        Relationships: [];
+      };
+      audit_logs: {
+        Row: {
+          id: string;
+          lab_id: string;
+          actor_id: string | null;
+          entity_type: string;
+          entity_id: string;
+          action: string;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          actor_id?: string | null;
+          entity_type: string;
+          entity_id: string;
+          action: string;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["audit_logs"]["Insert"]>;
+        Relationships: [];
+      };
+      app_settings: {
+        Row: {
+          id: string;
+          lab_id: string;
+          key: string;
+          value: Json;
+          settings: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          key: string;
+          value?: Json;
+          settings?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["app_settings"]["Insert"]>;
         Relationships: [];
       };
       case_files: {

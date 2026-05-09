@@ -5,7 +5,7 @@ import { InvoicesDashboard } from "@/components/finance/invoices-dashboard";
 import { requireRouteAccess } from "@/lib/auth/guards";
 import { getFinanceDashboard } from "@/lib/data/finance";
 
-export default async function InvoicesPage() {
+export default async function NewInvoicePage() {
   const session = await requireRouteAccess("/invoices");
   const data = await getFinanceDashboard(session);
 
@@ -16,6 +16,7 @@ export default async function InvoicesPage() {
         doctors={data.doctors}
         cases={data.cases}
         summary={data.summary}
+        showCreate
       />
     </AppShell>
   );

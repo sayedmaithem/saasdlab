@@ -1,16 +1,17 @@
 export const dynamic = "force-dynamic";
 
 import { AppShell } from "@/components/layout/app-shell";
-import { ModuleScaffold } from "@/components/layout/module-scaffold";
+import { SettingsDashboard } from "@/components/settings/settings-dashboard";
 import { requireRouteAccess } from "@/lib/auth/guards";
-import { foundationRoutes } from "@/lib/constants/modules";
+import { getSettingsData } from "@/lib/data/settings";
 
 export default async function SettingsPage() {
   const session = await requireRouteAccess("/settings");
+  const data = await getSettingsData(session);
 
   return (
     <AppShell labName="LabFlow" session={session} activeHref="/settings">
-      <ModuleScaffold route={foundationRoutes.settings} />
+      <SettingsDashboard data={data} />
     </AppShell>
   );
 }

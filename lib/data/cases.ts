@@ -513,6 +513,9 @@ export async function getCaseDetail(
 
   if (error) throw new Error(error.message);
   if (!row) notFound();
+  if (session.roles.includes("doctor") && row.doctors?.profile_id !== session.userId) {
+    notFound();
+  }
 
 	  const base = toListItem(row);
 	  const accessCase: CaseFileAccessCase = {

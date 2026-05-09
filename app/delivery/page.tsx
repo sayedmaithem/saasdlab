@@ -1,16 +1,17 @@
 export const dynamic = "force-dynamic";
 
 import { AppShell } from "@/components/layout/app-shell";
-import { ModuleScaffold } from "@/components/layout/module-scaffold";
+import { DeliveryDashboard } from "@/components/delivery/delivery-dashboard";
 import { requireRouteAccess } from "@/lib/auth/guards";
-import { foundationRoutes } from "@/lib/constants/modules";
+import { getDeliveryData } from "@/lib/data/delivery";
 
 export default async function DeliveryPage() {
   const session = await requireRouteAccess("/delivery");
+  const data = await getDeliveryData(session);
 
   return (
     <AppShell labName="LabFlow" session={session} activeHref="/delivery">
-      <ModuleScaffold route={foundationRoutes.delivery} />
+      <DeliveryDashboard items={data.items} deliveryPeople={data.deliveryPeople} />
     </AppShell>
   );
 }

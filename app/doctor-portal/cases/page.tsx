@@ -5,9 +5,19 @@ import { DoctorPortalDashboard } from "@/components/doctor-portal/doctor-portal-
 import { requireRouteAccess } from "@/lib/auth/guards";
 import { getDoctorPortalData } from "@/lib/data/doctor-portal";
 
-export default async function DoctorPortalPage() {
+export default async function DoctorPortalCasesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ query?: string; status?: string; waitingInfo?: string; approval?: string }>;
+}) {
   const session = await requireRouteAccess("/doctor-portal");
-  const data = await getDoctorPortalData(session);
+  const filters = await searchParams;
+  const data = await getDoctorPortalData(session, {
+    query: filters.query,
+    status: filters.status,
+    waitingInfo: filters.waitingInfo === "true",
+    approval: filters.approval === "true",
+  });
 
   return (
     <AppShell labName="LabFlow" session={session} activeHref="/doctor-portal">

@@ -1,16 +1,17 @@
 export const dynamic = "force-dynamic";
 
 import { AppShell } from "@/components/layout/app-shell";
-import { ModuleScaffold } from "@/components/layout/module-scaffold";
+import { PaymentsDashboard } from "@/components/finance/payments-dashboard";
 import { requireRouteAccess } from "@/lib/auth/guards";
-import { foundationRoutes } from "@/lib/constants/modules";
+import { getFinanceDashboard } from "@/lib/data/finance";
 
 export default async function PaymentsPage() {
   const session = await requireRouteAccess("/payments");
+  const data = await getFinanceDashboard(session);
 
   return (
     <AppShell labName="LabFlow" session={session} activeHref="/payments">
-      <ModuleScaffold route={foundationRoutes.payments} />
+      <PaymentsDashboard doctors={data.doctors} summary={data.summary} />
     </AppShell>
   );
 }
