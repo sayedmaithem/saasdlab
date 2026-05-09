@@ -14,6 +14,14 @@ import type {
   CaseFileVisibility,
 } from "@/lib/files/case-file-rules";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { hasSupabaseEnv } from "@/lib/env";
+import {
+  canCreateCaseComment,
+  canViewCaseComment,
+  getAllowedCommentVisibilities,
+  type CommentAccessCase,
+  type CommentVisibility,
+} from "@/lib/comments/comment-permissions";
 import {
   canCommentOnDesignVersion,
   canDecideDesignVersion,
@@ -21,7 +29,10 @@ import {
   type DesignAccessCase,
   type DesignStatus,
 } from "@/lib/design/design-workflow";
+import { isTimelineEventType, type TimelineEventType } from "@/lib/timeline/events";
+import type { AppRole } from "@/lib/constants/roles";
 import type { AuthSessionContext } from "@/types/app";
+import type { Json } from "@/types/database";
 
 export type CaseListFilters = {
   query?: string;
@@ -68,12 +79,15 @@ export type CaseDetail = CaseListItem & {
     notes: string | null;
     createdAt: string;
   }>;
-  timeline: Array<{
-    id: string;
-    eventType: string;
-    title: string;
-    createdAt: string;
-  }>;
+	  timeline: Array<{
+	    id: string;
+	    eventType: TimelineEventType;
+	    title: string;
+	    details: string | null;
+	    actorName: string;
+	    actorRole: AppRole | null;
+	    createdAt: string;
+	  }>;
   filesCount: number;
   files: CaseFileItem[];
   allowedUploadCategories: CaseFileCategory[];
@@ -82,6 +96,9 @@ export type CaseDetail = CaseListItem & {
   canUploadDesignVersion: boolean;
   canDecideDesignVersion: boolean;
   canCommentDesignVersion: boolean;
+  comments: CaseCommentItem[];
+  canCreateComment: boolean;
+  allowedCommentVisibilities: CommentVisibility[];
 };
 
 export type CaseFileItem = {
@@ -113,6 +130,18 @@ export type DesignVersionItem = {
   approvalStatus: string | null;
   approvalComment: string | null;
   approvalDecidedAt: string | null;
+};
+
+export type CaseCommentItem = {
+  id: string;
+  authorId: string | null;
+  authorName: string;
+  authorRole: AppRole | null;
+  body: string;
+  visibility: CommentVisibility;
+  fileId: string | null;
+  fileName: string | null;
+  createdAt: string;
 };
 
 type CaseRow = {
@@ -191,6 +220,31 @@ type DesignApprovalRow = {
   created_at: string;
 };
 
+type CaseCommentRow = {
+  id: string;
+  author_id: string | null;
+  body: string;
+  visibility: CommentVisibility;
+  file_id: string | null;
+  created_at: string;
+};
+
+type TimelineRow = {
+  id: string;
+  event_type: string;
+  title: string;
+  metadata: Json;
+  actor_id: string | null;
+  created_at: string;
+};
+
+type ProfileSummaryRow = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  role: AppRole | null;
+};
+
 function assertLab(session: AuthSessionContext) {
   if (!session.activeLabId) {
     throw new Error("No active lab was found for this user.");
@@ -235,11 +289,43 @@ function toListItem(row: CaseRow): CaseListItem {
   };
 }
 
+function getTimelineDetails(metadata: Json) {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return null;
+  }
+
+  const details = [
+    typeof metadata.from_stage === "string" && typeof metadata.to_stage === "string"
+      ? `${metadata.from_stage.replaceAll("_", " ")} to ${metadata.to_stage.replaceAll("_", " ")}`
+      : null,
+    typeof metadata.visibility === "string"
+      ? `Visibility: ${metadata.visibility.replaceAll("_", " ")}`
+      : null,
+    typeof metadata.file_type === "string" ? `File: ${metadata.file_type}` : null,
+    typeof metadata.decision === "string"
+      ? `Decision: ${metadata.decision.replaceAll("_", " ")}`
+      : null,
+    typeof metadata.problem === "string" ? `Problem: ${metadata.problem}` : null,
+    typeof metadata.delay_reason === "string" ? `Delay: ${metadata.delay_reason}` : null,
+    typeof metadata.comment === "string" ? metadata.comment : null,
+  ].filter(Boolean);
+
+  return details.length ? details.join(" / ") : null;
+}
+
 export async function getCaseList(
   session: AuthSessionContext,
   filters: CaseListFilters,
 ) {
   const labId = assertLab(session);
+
+  if (!hasSupabaseEnv()) {
+    return {
+      cases: [],
+      doctors: [],
+    };
+  }
+
   const supabase = await createSupabaseServerClient();
   let query = supabase
     .from("cases")
@@ -302,6 +388,11 @@ export async function getCaseDetail(
   canViewFinance: boolean,
 ) {
   const labId = assertLab(session);
+
+  if (!hasSupabaseEnv()) {
+    notFound();
+  }
+
   const supabase = await createSupabaseServerClient();
 	  const [
 	    { data: row, error: caseError },
@@ -310,6 +401,7 @@ export async function getCaseDetail(
 	    { data: files, error: filesError },
 	    { data: designVersions, error: designError },
 	    { data: designApprovals, error: approvalError },
+	    { data: comments, error: commentsError },
 	  ] = await Promise.all([
     supabase
 	      .from("cases")
@@ -334,20 +426,15 @@ export async function getCaseDetail(
           created_at: string;
         }>
       >(),
-    supabase
-      .from("case_timeline")
-      .select("id, event_type, title, created_at")
+	    supabase
+	      .from("case_timeline")
+	      .select("id, event_type, title, metadata, actor_id, created_at")
       .eq("lab_id", labId)
       .eq("case_id", caseId)
       .order("created_at", { ascending: false })
       .returns<
-        Array<{
-          id: string;
-          event_type: string;
-          title: string;
-          created_at: string;
-        }>
-      >(),
+	        TimelineRow[]
+	      >(),
 	    supabase
 	      .from("case_files")
 	      .select(
@@ -373,6 +460,13 @@ export async function getCaseDetail(
 	      .eq("case_id", caseId)
 	      .order("created_at", { ascending: false })
 	      .returns<DesignApprovalRow[]>(),
+	    supabase
+	      .from("case_comments")
+	      .select("id, author_id, body, visibility, file_id, created_at")
+	      .eq("lab_id", labId)
+	      .eq("case_id", caseId)
+	      .order("created_at", { ascending: true })
+	      .returns<CaseCommentRow[]>(),
 	  ]);
 
 	  const error =
@@ -381,7 +475,8 @@ export async function getCaseDetail(
 	    timelineError ??
 	    filesError ??
 	    designError ??
-	    approvalError;
+	    approvalError ??
+	    commentsError;
 
   if (error) throw new Error(error.message);
   if (!row) notFound();
@@ -402,16 +497,18 @@ export async function getCaseDetail(
 	        ...(designVersions ?? []).map(
 	          (version) => version.uploaded_by ?? version.submitted_by,
 	        ),
+	        ...(comments ?? []).map((comment) => comment.author_id),
+	        ...(timeline ?? []).map((event) => event.actor_id),
 	      ]
 	        .filter((id): id is string => Boolean(id)),
 	    ),
 	  );
 	  const { data: uploaders, error: uploadersError } = uploaderIds.length
 	    ? await supabase
-	        .from("profiles")
-	        .select("id, full_name, email")
-	        .in("id", uploaderIds)
-	        .returns<Array<{ id: string; full_name: string | null; email: string | null }>>()
+		        .from("profiles")
+		        .select("id, full_name, email, role")
+		        .in("id", uploaderIds)
+		        .returns<ProfileSummaryRow[]>()
 	    : { data: [], error: null };
 
 	  if (uploadersError) throw new Error(uploadersError.message);
@@ -422,6 +519,7 @@ export async function getCaseDetail(
 	      profile.full_name ?? profile.email ?? "Unknown user",
 	    ]),
 	  );
+	  const profileMap = new Map((uploaders ?? []).map((profile) => [profile.id, profile]));
 	  const visibleFiles = (files ?? [])
 	    .filter((file) =>
 	      canViewCaseFile({
@@ -455,6 +553,10 @@ export async function getCaseDetail(
 	    doctorProfileId: accessCase.doctorProfileId,
 	    assignedTechnicianId: accessCase.assignedTechnicianId,
 	  };
+	  const commentAccess: CommentAccessCase = {
+	    doctorProfileId: accessCase.doctorProfileId,
+	    assignedTechnicianId: accessCase.assignedTechnicianId,
+	  };
 	  const latestApprovalByDesign = new Map<string, DesignApprovalRow>();
 
 	  for (const approval of designApprovals ?? []) {
@@ -484,6 +586,37 @@ export async function getCaseDetail(
 	      approvalComment: approval?.comment ?? null,
 	      approvalDecidedAt: version.approval_decided_at ?? approval?.decided_at ?? null,
 	    } satisfies DesignVersionItem;
+	  });
+	  const fileNameMap = new Map(visibleFiles.map((file) => [file.id, file.fileName]));
+	  const commentItems = (comments ?? [])
+	    .filter((comment) =>
+	      canViewCaseComment({
+	        roles: session.roles,
+	        userId: session.userId,
+	        item: commentAccess,
+	        visibility: comment.visibility,
+	      }),
+	    )
+	    .map((comment) => {
+	      const profile = comment.author_id ? profileMap.get(comment.author_id) : null;
+
+	      return {
+	        id: comment.id,
+	        authorId: comment.author_id,
+	        authorName:
+	          profile?.full_name ?? profile?.email ?? (comment.author_id ? "Unknown user" : "System"),
+	        authorRole: profile?.role ?? null,
+	        body: comment.body,
+	        visibility: comment.visibility,
+	        fileId: comment.file_id,
+	        fileName: comment.file_id ? fileNameMap.get(comment.file_id) ?? null : null,
+	        createdAt: comment.created_at,
+	      } satisfies CaseCommentItem;
+	    });
+	  const allowedCommentVisibilities = getAllowedCommentVisibilities({
+	    roles: session.roles,
+	    userId: session.userId,
+	    item: commentAccess,
 	  });
 
 	  return {
@@ -526,6 +659,16 @@ export async function getCaseDetail(
 	      userId: session.userId,
 	      item: designAccess,
 	    }),
+	    comments: commentItems,
+	    canCreateComment: allowedCommentVisibilities.some((visibility) =>
+	      canCreateCaseComment({
+	        roles: session.roles,
+	        userId: session.userId,
+	        item: commentAccess,
+	        visibility,
+	      }),
+	    ),
+	    allowedCommentVisibilities,
     stageHistory: (stageLogs ?? []).map((item) => ({
       id: item.id,
       fromStage: item.from_stage,
@@ -533,11 +676,23 @@ export async function getCaseDetail(
       notes: item.notes,
       createdAt: item.created_at,
     })),
-    timeline: (timeline ?? []).map((item) => ({
-      id: item.id,
-      eventType: item.event_type,
-      title: item.title,
-      createdAt: item.created_at,
-    })),
-  } satisfies CaseDetail;
+	    timeline: (timeline ?? [])
+	      .filter((item) => isTimelineEventType(item.event_type))
+	      .map((item) => {
+	        const profile = item.actor_id ? profileMap.get(item.actor_id) : null;
+
+	        return {
+	          id: item.id,
+	          eventType: item.event_type as TimelineEventType,
+	          title: item.title,
+	          details: getTimelineDetails(item.metadata),
+	          actorName:
+	            profile?.full_name ??
+	            profile?.email ??
+	            (item.actor_id ? "Unknown user" : "System"),
+	          actorRole: profile?.role ?? null,
+	          createdAt: item.created_at,
+	        };
+	      }),
+	  } satisfies CaseDetail;
 }

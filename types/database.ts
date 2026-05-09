@@ -8,6 +8,7 @@ import type {
   CaseFileVisibility,
 } from "@/lib/files/case-file-rules";
 import type { DesignStatus } from "@/lib/design/design-workflow";
+import type { CommentVisibility } from "@/lib/comments/comment-permissions";
 import type { CasePriority } from "@/types/app";
 
 export type Json =
@@ -431,6 +432,32 @@ export type Database = {
         Update: Partial<
           Database["public"]["Tables"]["case_timeline"]["Insert"]
         >;
+	        Relationships: [];
+	      };
+	      case_comments: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_id: string;
+	          author_id: string | null;
+	          body: string;
+	          visibility: CommentVisibility;
+	          file_id: string | null;
+	          created_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          case_id: string;
+	          author_id?: string | null;
+	          body: string;
+	          visibility?: CommentVisibility;
+	          file_id?: string | null;
+	          created_at?: string;
+	        };
+	        Update: Partial<
+	          Database["public"]["Tables"]["case_comments"]["Insert"]
+	        >;
 	        Relationships: [];
 	      };
 	      design_versions: {

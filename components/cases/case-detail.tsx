@@ -2,6 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CaseFileManager } from "@/components/files/case-file-manager";
 import { DesignWorkflow } from "@/components/design/design-workflow";
+import { CaseDiscussion } from "@/components/comments/case-discussion";
+import { CaseTimeline } from "@/components/timeline/case-timeline";
 import type { CaseDetail as CaseDetailData } from "@/lib/data/cases";
 
 function money(value: number) {
@@ -74,19 +76,14 @@ export function CaseDetail({
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Timeline</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {item.timeline.map((event) => (
-                <div key={event.id} className="rounded-lg border bg-background p-3">
-                  <p className="text-sm font-semibold">{event.title}</p>
-                  <p className="text-xs text-muted-foreground">{event.createdAt}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+	          <Card>
+	            <CardHeader>
+	              <CardTitle>Timeline</CardTitle>
+	            </CardHeader>
+	            <CardContent>
+	              <CaseTimeline events={item.timeline} />
+	            </CardContent>
+	          </Card>
 
           <Card>
             <CardHeader>
@@ -153,12 +150,18 @@ export function CaseDetail({
 	            </CardContent>
 	          </Card>
 
-          <Card>
-            <CardHeader><CardTitle>Comments</CardTitle></CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Case comments placeholder for Phase 9.
-            </CardContent>
-          </Card>
+	          <Card>
+	            <CardHeader><CardTitle>Comments</CardTitle></CardHeader>
+	            <CardContent>
+	              <CaseDiscussion
+	                caseId={item.id}
+	                comments={item.comments}
+	                files={item.files}
+	                canCreateComment={item.canCreateComment}
+	                allowedVisibilities={item.allowedCommentVisibilities}
+	              />
+	            </CardContent>
+	          </Card>
 
           {canViewFinance ? (
             <Card>
