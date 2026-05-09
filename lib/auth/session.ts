@@ -9,6 +9,16 @@ type MembershipRow = {
   role: AppRole;
 };
 
+type ProfileRow = {
+  id: string;
+  lab_id: string | null;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  role: AppRole | null;
+  is_active: boolean;
+};
+
 export async function getCurrentSessionContext(): Promise<AuthSessionContext | null> {
   if (!hasSupabaseEnv()) {
     return null;
@@ -24,22 +34,43 @@ export async function getCurrentSessionContext(): Promise<AuthSessionContext | n
     return null;
   }
 
-  const { data: memberships, error: membershipsError } = await supabase
-    .from("lab_memberships")
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, lab_id, full_name, email, phone, role, is_active")
+    .eq("id", user.id)
+    .maybeSingle<ProfileRow>();
+
+  if (profileError) {
+    throw new Error(profileError.message);
+  }
+
+  if (!profile || !profile.is_active || !profile.role) {
+    return null;
+  }
+
+  const { data: extraRoles, error: rolesError } = await supabase
+    .from("user_roles")
     .select("lab_id, role")
     .eq("user_id", user.id)
     .eq("is_active", true)
     .returns<MembershipRow[]>();
 
-  if (membershipsError) {
-    throw new Error(membershipsError.message);
+  if (rolesError) {
+    throw new Error(rolesError.message);
   }
+
+  const roles = Array.from(
+    new Set([profile.role, ...(extraRoles?.map((item) => item.role) ?? [])]),
+  );
 
   return {
     userId: user.id,
-    email: user.email ?? null,
-    activeLabId: memberships?.[0]?.lab_id ?? null,
-    roles: memberships?.map((membership) => membership.role) ?? [],
+    email: profile.email ?? user.email ?? null,
+    fullName: profile.full_name,
+    phone: profile.phone,
+    role: profile.role,
+    activeLabId: profile.lab_id ?? extraRoles?.[0]?.lab_id ?? null,
+    roles,
   };
 }
 

@@ -1,16 +1,20 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { NewCaseForm } from "@/components/cases/new-case-form";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { requireRouteAccess } from "@/lib/auth/guards";
 import { getCaseFormOptions } from "@/lib/data/dashboard";
 
 export default async function NewCasePage() {
+  const session = await requireRouteAccess("/cases/new");
   const options = await getCaseFormOptions();
 
   return (
-    <AppShell labName="LabFlow" activeHref="/cases">
+    <AppShell labName="LabFlow" session={session} activeHref="/cases">
       <div className="mb-5 flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-muted-foreground">

@@ -61,21 +61,47 @@ export type Database = {
       profiles: {
         Row: {
           id: string;
+          lab_id: string | null;
           full_name: string | null;
           email: string | null;
           phone: string | null;
+          role: AppRole | null;
+          is_active: boolean;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id: string;
+          lab_id?: string | null;
           full_name?: string | null;
           email?: string | null;
           phone?: string | null;
+          role?: AppRole | null;
+          is_active?: boolean;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+        Relationships: [];
+      };
+      user_roles: {
+        Row: {
+          id: string;
+          lab_id: string;
+          user_id: string;
+          role: AppRole;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          user_id: string;
+          role: AppRole;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["user_roles"]["Insert"]>;
         Relationships: [];
       };
       clinics: {
@@ -84,7 +110,10 @@ export type Database = {
           lab_id: string;
           name: string;
           address: string | null;
+          email: string | null;
           phone: string | null;
+          notes: string | null;
+          is_active: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -93,7 +122,10 @@ export type Database = {
           lab_id: string;
           name: string;
           address?: string | null;
+          email?: string | null;
           phone?: string | null;
+          notes?: string | null;
+          is_active?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -110,6 +142,12 @@ export type Database = {
           phone: string | null;
           default_clinic_id: string | null;
           performance_score: number;
+          is_active: boolean;
+          is_vip: boolean;
+          address: string | null;
+          notes: string | null;
+          payment_terms: string | null;
+          default_price_group: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -122,6 +160,12 @@ export type Database = {
           phone?: string | null;
           default_clinic_id?: string | null;
           performance_score?: number;
+          is_active?: boolean;
+          is_vip?: boolean;
+          address?: string | null;
+          notes?: string | null;
+          payment_terms?: string | null;
+          default_price_group?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -137,11 +181,19 @@ export type Database = {
           doctor_id: string;
           clinic_id: string;
           stage: ProductionStage;
+          current_stage?: ProductionStage;
+          status?: string;
           priority: CasePriority;
           restoration_type: string;
+          work_type?: string | null;
+          material?: string | null;
           shade: string | null;
           tooth_numbers: number[];
           due_date: string | null;
+          is_urgent?: boolean;
+          is_remake?: boolean;
+          missing_info_status?: string;
+          total_price?: number;
           clinical_notes: string | null;
           assigned_technician_id: string | null;
           created_by: string | null;
@@ -156,11 +208,19 @@ export type Database = {
           doctor_id: string;
           clinic_id: string;
           stage?: ProductionStage;
+          current_stage?: ProductionStage;
+          status?: string;
           priority?: CasePriority;
           restoration_type: string;
+          work_type?: string | null;
+          material?: string | null;
           shade?: string | null;
           tooth_numbers?: number[];
           due_date?: string | null;
+          is_urgent?: boolean;
+          is_remake?: boolean;
+          missing_info_status?: string;
+          total_price?: number;
           clinical_notes?: string | null;
           assigned_technician_id?: string | null;
           created_by?: string | null;
@@ -168,6 +228,91 @@ export type Database = {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["cases"]["Insert"]>;
+        Relationships: [];
+      };
+      doctor_price_lists: {
+        Row: {
+          id: string;
+          lab_id: string;
+          doctor_id: string | null;
+          clinic_id: string | null;
+          work_type: string;
+          material: string | null;
+          unit_price: number;
+          is_active: boolean;
+          effective_from: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          doctor_id?: string | null;
+          clinic_id?: string | null;
+          work_type: string;
+          material?: string | null;
+          unit_price: number;
+          is_active?: boolean;
+          effective_from?: string;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["doctor_price_lists"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      invoices: {
+        Row: {
+          id: string;
+          lab_id: string;
+          doctor_id: string;
+          clinic_id: string | null;
+          invoice_number: string;
+          status: string;
+          subtotal: number;
+          discount: number;
+          tax: number;
+          total: number;
+          paid_amount: number;
+          remaining_balance: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          doctor_id: string;
+          clinic_id?: string | null;
+          invoice_number: string;
+          status?: string;
+          subtotal?: number;
+          discount?: number;
+          tax?: number;
+          paid_amount?: number;
+          remaining_balance?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["invoices"]["Insert"]>;
+        Relationships: [];
+      };
+      payments: {
+        Row: {
+          id: string;
+          lab_id: string;
+          invoice_id: string | null;
+          doctor_id: string | null;
+          amount: number;
+          paid_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          invoice_id?: string | null;
+          doctor_id?: string | null;
+          amount: number;
+          paid_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["payments"]["Insert"]>;
         Relationships: [];
       };
       case_files: {
