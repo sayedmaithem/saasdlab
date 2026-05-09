@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CaseFileManager } from "@/components/files/case-file-manager";
+import { DesignWorkflow } from "@/components/design/design-workflow";
 import type { CaseDetail as CaseDetailData } from "@/lib/data/cases";
 
 function money(value: number) {
@@ -138,12 +139,19 @@ export function CaseDetail({
 	            </CardContent>
 	          </Card>
 
-          <Card>
-            <CardHeader><CardTitle>Design versions</CardTitle></CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Design workflow placeholder for Phase 8.
-            </CardContent>
-          </Card>
+	          <Card>
+	            <CardHeader><CardTitle>Design versions</CardTitle></CardHeader>
+	            <CardContent>
+	              <DesignWorkflow
+	                labId={item.labId}
+	                caseId={item.id}
+	                versions={item.designVersions}
+	                canUpload={item.canUploadDesignVersion}
+	                canDecide={item.canDecideDesignVersion}
+	                canComment={item.canCommentDesignVersion}
+	              />
+	            </CardContent>
+	          </Card>
 
           <Card>
             <CardHeader><CardTitle>Comments</CardTitle></CardHeader>

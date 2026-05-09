@@ -25,6 +25,7 @@ export type CaseFileActionState = {
   ok: boolean;
   message: string;
   url?: string;
+  fileId?: string;
 };
 
 const registerCaseFileSchema = z.object({
@@ -329,7 +330,11 @@ export async function registerCaseFileAction(
   revalidatePath(`/cases/${payload.caseId}`);
   revalidatePath("/cases");
 
-  return { ok: true, message: `${payload.fileName} uploaded.` };
+  return {
+    ok: true,
+    message: `${payload.fileName} uploaded.`,
+    fileId: fileRow.id,
+  };
 }
 
 export async function createCaseFileDownloadUrlAction(

@@ -48,6 +48,7 @@ type CaseWorkflowRow = {
   status: string | null;
   missing_info_status: string | null;
   assigned_technician_id: string | null;
+  requires_doctor_approval: boolean | null;
 };
 
 type TechnicianRow = {
@@ -72,7 +73,7 @@ async function getWorkflowCase(caseId: string, labId: string) {
   const { data, error } = await supabase
     .from("cases")
     .select(
-      "id, lab_id, case_number, current_stage, stage, due_date, status, missing_info_status, assigned_technician_id",
+      "id, lab_id, case_number, current_stage, stage, due_date, status, missing_info_status, assigned_technician_id, requires_doctor_approval",
     )
     .eq("lab_id", labId)
     .eq("id", caseId)
@@ -82,6 +83,21 @@ async function getWorkflowCase(caseId: string, labId: string) {
   if (!data) throw new Error("Case was not found.");
 
   return data;
+}
+
+async function hasApprovedDesign(caseId: string, labId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("design_versions")
+    .select("id")
+    .eq("lab_id", labId)
+    .eq("case_id", caseId)
+    .eq("status", "approved")
+    .limit(1);
+
+  if (error) throw new Error(error.message);
+
+  return Boolean(data?.length);
 }
 
 async function hasPassedQc(caseId: string, labId: string) {
@@ -200,7 +216,18 @@ export async function moveCaseStageAction(
       dueDate: item.due_date,
     });
 
-    if (transitionError) return { ok: false, message: transitionError };
+	    if (transitionError) return { ok: false, message: transitionError };
+
+	    if (
+	      parsed.data.targetStage === "milling_printing" &&
+	      item.requires_doctor_approval &&
+	      !(await hasApprovedDesign(item.id, item.lab_id))
+	    ) {
+	      return {
+	        ok: false,
+	        message: "Doctor approval is required before milling or printing.",
+	      };
+	    }
 
     const now = new Date().toISOString();
     const nextStatus =

@@ -14,6 +14,13 @@ import type {
   CaseFileVisibility,
 } from "@/lib/files/case-file-rules";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  canCommentOnDesignVersion,
+  canDecideDesignVersion,
+  canUploadDesignVersion,
+  type DesignAccessCase,
+  type DesignStatus,
+} from "@/lib/design/design-workflow";
 import type { AuthSessionContext } from "@/types/app";
 
 export type CaseListFilters = {
@@ -71,6 +78,10 @@ export type CaseDetail = CaseListItem & {
   files: CaseFileItem[];
   allowedUploadCategories: CaseFileCategory[];
   allowedUploadVisibilities: CaseFileVisibility[];
+  designVersions: DesignVersionItem[];
+  canUploadDesignVersion: boolean;
+  canDecideDesignVersion: boolean;
+  canCommentDesignVersion: boolean;
 };
 
 export type CaseFileItem = {
@@ -86,6 +97,22 @@ export type CaseFileItem = {
   uploadedBy: string | null;
   uploadedByName: string;
   uploadedAt: string;
+};
+
+export type DesignVersionItem = {
+  id: string;
+  versionNumber: number;
+  uploadedBy: string | null;
+  uploadedByName: string;
+  uploadedAt: string;
+  status: DesignStatus;
+  notes: string | null;
+  previewFileId: string | null;
+  files: CaseFileItem[];
+  doctorResponse: string | null;
+  approvalStatus: string | null;
+  approvalComment: string | null;
+  approvalDecidedAt: string | null;
 };
 
 type CaseRow = {
@@ -140,6 +167,27 @@ type CaseFileRow = {
   size_bytes: number | null;
   mime_type: string | null;
   uploaded_by: string | null;
+  created_at: string;
+};
+
+type DesignVersionRow = {
+  id: string;
+  version_number: number;
+  uploaded_by: string | null;
+  submitted_by: string | null;
+  created_at: string;
+  status: DesignStatus;
+  notes: string | null;
+  preview_file_id: string | null;
+  doctor_response: string | null;
+  approval_decided_at: string | null;
+};
+
+type DesignApprovalRow = {
+  design_version_id: string;
+  status: string;
+  comment: string | null;
+  decided_at: string | null;
   created_at: string;
 };
 
@@ -260,6 +308,8 @@ export async function getCaseDetail(
 	    { data: stageLogs, error: stageError },
 	    { data: timeline, error: timelineError },
 	    { data: files, error: filesError },
+	    { data: designVersions, error: designError },
+	    { data: designApprovals, error: approvalError },
 	  ] = await Promise.all([
     supabase
 	      .from("cases")
@@ -307,9 +357,31 @@ export async function getCaseDetail(
 	      .eq("case_id", caseId)
 	      .order("created_at", { ascending: false })
 	      .returns<CaseFileRow[]>(),
+	    supabase
+	      .from("design_versions")
+	      .select(
+	        "id, version_number, uploaded_by, submitted_by, created_at, status, notes, preview_file_id, doctor_response, approval_decided_at",
+	      )
+	      .eq("lab_id", labId)
+	      .eq("case_id", caseId)
+	      .order("version_number", { ascending: false })
+	      .returns<DesignVersionRow[]>(),
+	    supabase
+	      .from("design_approvals")
+	      .select("design_version_id, status, comment, decided_at, created_at")
+	      .eq("lab_id", labId)
+	      .eq("case_id", caseId)
+	      .order("created_at", { ascending: false })
+	      .returns<DesignApprovalRow[]>(),
 	  ]);
 
-  const error = caseError ?? stageError ?? timelineError ?? filesError;
+	  const error =
+	    caseError ??
+	    stageError ??
+	    timelineError ??
+	    filesError ??
+	    designError ??
+	    approvalError;
 
   if (error) throw new Error(error.message);
   if (!row) notFound();
@@ -325,8 +397,12 @@ export async function getCaseDetail(
 	    : [];
 	  const uploaderIds = Array.from(
 	    new Set(
-	      (files ?? [])
-	        .map((file) => file.uploaded_by)
+	      [
+	        ...(files ?? []).map((file) => file.uploaded_by),
+	        ...(designVersions ?? []).map(
+	          (version) => version.uploaded_by ?? version.submitted_by,
+	        ),
+	      ]
 	        .filter((id): id is string => Boolean(id)),
 	    ),
 	  );
@@ -375,6 +451,40 @@ export async function getCaseDetail(
 	        : "System",
 	      uploadedAt: file.created_at,
 	    }));
+	  const designAccess: DesignAccessCase = {
+	    doctorProfileId: accessCase.doctorProfileId,
+	    assignedTechnicianId: accessCase.assignedTechnicianId,
+	  };
+	  const latestApprovalByDesign = new Map<string, DesignApprovalRow>();
+
+	  for (const approval of designApprovals ?? []) {
+	    if (!latestApprovalByDesign.has(approval.design_version_id)) {
+	      latestApprovalByDesign.set(approval.design_version_id, approval);
+	    }
+	  }
+
+	  const designItems = (designVersions ?? []).map((version) => {
+	    const approval = latestApprovalByDesign.get(version.id);
+	    const uploadedBy = version.uploaded_by ?? version.submitted_by;
+
+	    return {
+	      id: version.id,
+	      versionNumber: Number(version.version_number),
+	      uploadedBy,
+	      uploadedByName: uploadedBy
+	        ? uploaderMap.get(uploadedBy) ?? "Unknown user"
+	        : "System",
+	      uploadedAt: version.created_at,
+	      status: version.status,
+	      notes: version.notes,
+	      previewFileId: version.preview_file_id,
+	      files: visibleFiles.filter((file) => file.designVersionId === version.id),
+	      doctorResponse: version.doctor_response,
+	      approvalStatus: approval?.status ?? null,
+	      approvalComment: approval?.comment ?? null,
+	      approvalDecidedAt: version.approval_decided_at ?? approval?.decided_at ?? null,
+	    } satisfies DesignVersionItem;
+	  });
 
 	  return {
 	    ...base,
@@ -399,6 +509,22 @@ export async function getCaseDetail(
 	      roles: session.roles,
 	      userId: session.userId,
 	      item: accessCase,
+	    }),
+	    designVersions: designItems,
+	    canUploadDesignVersion: canUploadDesignVersion({
+	      roles: session.roles,
+	      userId: session.userId,
+	      item: designAccess,
+	    }),
+	    canDecideDesignVersion: canDecideDesignVersion({
+	      roles: session.roles,
+	      userId: session.userId,
+	      item: designAccess,
+	    }),
+	    canCommentDesignVersion: canCommentOnDesignVersion({
+	      roles: session.roles,
+	      userId: session.userId,
+	      item: designAccess,
 	    }),
     stageHistory: (stageLogs ?? []).map((item) => ({
       id: item.id,

@@ -7,6 +7,7 @@ import type {
   CaseFileCategory,
   CaseFileVisibility,
 } from "@/lib/files/case-file-rules";
+import type { DesignStatus } from "@/lib/design/design-workflow";
 import type { CasePriority } from "@/types/app";
 
 export type Json =
@@ -406,7 +407,7 @@ export type Database = {
 	        >;
 	        Relationships: [];
 	      };
-      case_timeline: {
+	      case_timeline: {
         Row: {
           id: string;
           lab_id: string;
@@ -430,9 +431,109 @@ export type Database = {
         Update: Partial<
           Database["public"]["Tables"]["case_timeline"]["Insert"]
         >;
-        Relationships: [];
-      };
-      doctor_price_lists: {
+	        Relationships: [];
+	      };
+	      design_versions: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_id: string;
+	          version_no: number;
+	          version_number: number;
+	          exocad_project_ref: string | null;
+	          notes: string | null;
+	          submitted_by: string | null;
+	          uploaded_by: string | null;
+	          status: DesignStatus;
+	          preview_file_id: string | null;
+	          doctor_response: string | null;
+	          approval_decided_at: string | null;
+	          created_at: string;
+	          updated_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          case_id: string;
+	          version_no: number;
+	          version_number: number;
+	          exocad_project_ref?: string | null;
+	          notes?: string | null;
+	          submitted_by?: string | null;
+	          uploaded_by?: string | null;
+	          status?: DesignStatus;
+	          preview_file_id?: string | null;
+	          doctor_response?: string | null;
+	          approval_decided_at?: string | null;
+	          created_at?: string;
+	          updated_at?: string;
+	        };
+	        Update: Partial<
+	          Database["public"]["Tables"]["design_versions"]["Insert"]
+	        >;
+	        Relationships: [];
+	      };
+	      design_approvals: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_id: string;
+	          design_version_id: string;
+	          doctor_id: string;
+	          status: string;
+	          comment: string | null;
+	          requested_at: string;
+	          decided_at: string | null;
+	          created_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          case_id: string;
+	          design_version_id: string;
+	          doctor_id: string;
+	          status?: string;
+	          comment?: string | null;
+	          requested_at?: string;
+	          decided_at?: string | null;
+	          created_at?: string;
+	        };
+	        Update: Partial<
+	          Database["public"]["Tables"]["design_approvals"]["Insert"]
+	        >;
+	        Relationships: [];
+	      };
+	      notifications: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          recipient_id: string | null;
+	          case_id: string | null;
+	          title: string;
+	          body: string | null;
+	          status: string;
+	          metadata: Json;
+	          created_at: string;
+	          read_at: string | null;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          recipient_id?: string | null;
+	          case_id?: string | null;
+	          title: string;
+	          body?: string | null;
+	          status?: string;
+	          metadata?: Json;
+	          created_at?: string;
+	          read_at?: string | null;
+	        };
+	        Update: Partial<
+	          Database["public"]["Tables"]["notifications"]["Insert"]
+	        >;
+	        Relationships: [];
+	      };
+	      doctor_price_lists: {
         Row: {
           id: string;
           lab_id: string;
