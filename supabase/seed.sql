@@ -49,17 +49,26 @@ values
   ('20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000005', 'accountant', true)
 on conflict (lab_id, user_id, role) do update set is_active = excluded.is_active;
 
-insert into public.clinics (id, lab_id, name, address, phone)
+insert into public.clinics (id, lab_id, name, address, phone, email, notes, is_active)
 values
-  ('30000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000001', 'Pearl Dental Center', 'Baghdad, Karrada', '+9647801111111'),
-  ('30000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000001', 'Noor Smile Clinic', 'Baghdad, Mansour', '+9647802222222')
-on conflict (id) do update set name = excluded.name;
+  ('30000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000001', 'Pearl Dental Center', 'Baghdad, Karrada', '+9647801111111', 'frontdesk@pearl.local', 'High-volume VIP clinic.', true),
+  ('30000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000001', 'Noor Smile Clinic', 'Baghdad, Mansour', '+9647802222222', 'admin@noorsmile.local', 'Implant and prostho-focused clinic.', true)
+on conflict (id) do update set
+  name = excluded.name,
+  email = excluded.email,
+  notes = excluded.notes,
+  is_active = excluded.is_active;
 
-insert into public.doctors (id, lab_id, profile_id, display_name, email, phone, default_clinic_id, performance_score)
+insert into public.doctors (id, lab_id, profile_id, display_name, email, phone, default_clinic_id, performance_score, is_active, is_vip, address, notes, payment_terms, default_price_group)
 values
-  ('40000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000004', 'Dr. Zain Kareem', 'doctor@labflow.local', '+964770000004', '30000000-0000-4000-8000-000000000001', 94.5),
-  ('40000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000001', null, 'Dr. Noor Abbas', 'noor@example.local', '+964770000006', '30000000-0000-4000-8000-000000000002', 88.0)
-on conflict (id) do update set display_name = excluded.display_name;
+  ('40000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000004', 'Dr. Zain Kareem', 'doctor@labflow.local', '+964770000004', '30000000-0000-4000-8000-000000000001', 94.5, true, true, 'Pearl Dental Center, Baghdad', 'Fast approvals, prefers design previews before milling.', 'Net 30', 'VIP'),
+  ('40000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000001', null, 'Dr. Noor Abbas', 'noor@example.local', '+964770000006', '30000000-0000-4000-8000-000000000002', 88.0, true, false, 'Noor Smile Clinic, Baghdad', 'Usually sends complete scans.', 'Weekly statement', 'Standard')
+on conflict (id) do update set
+  display_name = excluded.display_name,
+  is_vip = excluded.is_vip,
+  payment_terms = excluded.payment_terms,
+  default_price_group = excluded.default_price_group,
+  notes = excluded.notes;
 
 insert into public.technicians (id, lab_id, profile_id, display_name, phone, productivity_score)
 values

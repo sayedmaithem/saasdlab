@@ -17,6 +17,10 @@ export const routeAccessRules: RouteAccessRule[] = [
     roles: ["super_admin", "lab_owner", "lab_manager", "reception", "accountant"],
   },
   {
+    path: "/clinics",
+    roles: ["super_admin", "lab_owner", "lab_manager", "reception", "accountant"],
+  },
+  {
     path: "/cases",
     roles: ["super_admin", "lab_owner", "lab_manager", "reception", "technician", "doctor"],
   },

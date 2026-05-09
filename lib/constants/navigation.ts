@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   FileStack,
   Gauge,
+  Hospital,
   Settings,
   Truck,
   UserCog,
@@ -38,6 +39,12 @@ export const appNavigation: AppNavItem[] = [
     label: "Doctors",
     href: "/doctors",
     icon: UsersRound,
+    roles: ["super_admin", "lab_owner", "lab_manager", "reception", "accountant"],
+  },
+  {
+    label: "Clinics",
+    href: "/clinics",
+    icon: Hospital,
     roles: ["super_admin", "lab_owner", "lab_manager", "reception", "accountant"],
   },
   {
