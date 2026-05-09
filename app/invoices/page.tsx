@@ -1,11 +1,22 @@
-import { AppShell } from "@/components/layout/app-shell";
-import { ModuleScaffold } from "@/components/layout/module-scaffold";
-import { foundationRoutes } from "@/lib/constants/modules";
+export const dynamic = "force-dynamic";
 
-export default function InvoicesPage() {
+import { AppShell } from "@/components/layout/app-shell";
+import { InvoicesDashboard } from "@/components/finance/invoices-dashboard";
+import { requireRouteAccess } from "@/lib/auth/guards";
+import { getFinanceDashboard } from "@/lib/data/finance";
+
+export default async function InvoicesPage() {
+  const session = await requireRouteAccess("/invoices");
+  const data = await getFinanceDashboard(session);
+
   return (
-    <AppShell labName="LabFlow" activeHref="/invoices">
-      <ModuleScaffold route={foundationRoutes.invoices} />
+    <AppShell labName="LabFlow" session={session} activeHref="/invoices">
+      <InvoicesDashboard
+        invoices={data.invoices}
+        doctors={data.doctors}
+        cases={data.cases}
+        summary={data.summary}
+      />
     </AppShell>
   );
 }

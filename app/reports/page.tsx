@@ -1,11 +1,17 @@
-import { AppShell } from "@/components/layout/app-shell";
-import { ModuleScaffold } from "@/components/layout/module-scaffold";
-import { foundationRoutes } from "@/lib/constants/modules";
+export const dynamic = "force-dynamic";
 
-export default function ReportsPage() {
+import { AppShell } from "@/components/layout/app-shell";
+import { ReportsDashboard } from "@/components/reports/reports-dashboard";
+import { requireRouteAccess } from "@/lib/auth/guards";
+import { getOpsReports } from "@/lib/data/reports";
+
+export default async function ReportsPage() {
+  const session = await requireRouteAccess("/reports");
+  const data = await getOpsReports(session);
+
   return (
-    <AppShell labName="LabFlow" activeHref="/reports">
-      <ModuleScaffold route={foundationRoutes.reports} />
+    <AppShell labName="LabFlow" session={session} activeHref="/reports">
+      <ReportsDashboard data={data} />
     </AppShell>
   );
 }
