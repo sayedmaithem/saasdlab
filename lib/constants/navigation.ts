@@ -1,0 +1,91 @@
+import {
+  BadgeDollarSign,
+  BarChart3,
+  Boxes,
+  ClipboardCheck,
+  FileStack,
+  Gauge,
+  Settings,
+  Truck,
+  UserCog,
+  UsersRound,
+  WalletCards,
+} from "lucide-react";
+import type { ComponentType } from "react";
+import type { AppRole } from "@/lib/constants/roles";
+
+export type AppNavItem = {
+  label: string;
+  href: string;
+  icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  roles: AppRole[];
+};
+
+export const appNavigation: AppNavItem[] = [
+  {
+    label: "Dashboard",
+    href: "/dashboard",
+    icon: Gauge,
+    roles: ["super_admin", "lab_owner", "lab_manager", "reception"],
+  },
+  {
+    label: "Cases",
+    href: "/cases",
+    icon: FileStack,
+    roles: ["super_admin", "lab_owner", "lab_manager", "reception", "technician", "doctor"],
+  },
+  {
+    label: "Doctors",
+    href: "/doctors",
+    icon: UsersRound,
+    roles: ["super_admin", "lab_owner", "lab_manager", "reception", "accountant"],
+  },
+  {
+    label: "Production",
+    href: "/production",
+    icon: Boxes,
+    roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
+  },
+  {
+    label: "Technicians",
+    href: "/technicians",
+    icon: UserCog,
+    roles: ["super_admin", "lab_owner", "lab_manager"],
+  },
+  {
+    label: "Invoices",
+    href: "/invoices",
+    icon: BadgeDollarSign,
+    roles: ["super_admin", "lab_owner", "lab_manager", "accountant"],
+  },
+  {
+    label: "Payments",
+    href: "/payments",
+    icon: WalletCards,
+    roles: ["super_admin", "lab_owner", "lab_manager", "accountant"],
+  },
+  {
+    label: "Delivery",
+    href: "/delivery",
+    icon: Truck,
+    roles: ["super_admin", "lab_owner", "lab_manager", "delivery"],
+  },
+  {
+    label: "Reports",
+    href: "/reports",
+    icon: BarChart3,
+    roles: ["super_admin", "lab_owner", "lab_manager", "accountant"],
+  },
+  {
+    label: "Settings",
+    href: "/settings",
+    icon: Settings,
+    roles: ["super_admin", "lab_owner", "lab_manager"],
+  },
+  {
+    label: "Doctor Portal",
+    href: "/doctor-portal",
+    icon: ClipboardCheck,
+    roles: ["doctor"],
+  },
+];

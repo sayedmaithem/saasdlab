@@ -1,0 +1,3 @@
+-- Optional local seed data for LabFlow Dental CRM.
+-- Keep production data and secrets out of this file.
+-- TODO: Add deterministic local-only seed rows after auth onboarding exists.
