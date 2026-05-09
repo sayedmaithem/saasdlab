@@ -30,6 +30,7 @@ import {
   type DesignStatus,
 } from "@/lib/design/design-workflow";
 import { isTimelineEventType, type TimelineEventType } from "@/lib/timeline/events";
+import type { QcResult } from "@/lib/quality/qc-rules";
 import type { AppRole } from "@/lib/constants/roles";
 import type { AuthSessionContext } from "@/types/app";
 import type { Json } from "@/types/database";
@@ -99,6 +100,14 @@ export type CaseDetail = CaseListItem & {
   comments: CaseCommentItem[];
   canCreateComment: boolean;
   allowedCommentVisibilities: CommentVisibility[];
+  latestQualityCheck: {
+    result: QcResult;
+    notes: string | null;
+    checkedByName: string;
+    createdAt: string;
+  } | null;
+  canManageQualityControl: boolean;
+  canManageRemakes: boolean;
 };
 
 export type CaseFileItem = {
@@ -229,6 +238,14 @@ type CaseCommentRow = {
   created_at: string;
 };
 
+type QualityCheckRow = {
+  id: string;
+  checked_by: string | null;
+  result: QcResult;
+  notes: string | null;
+  created_at: string;
+};
+
 type TimelineRow = {
   id: string;
   event_type: string;
@@ -307,6 +324,12 @@ function getTimelineDetails(metadata: Json) {
       : null,
     typeof metadata.problem === "string" ? `Problem: ${metadata.problem}` : null,
     typeof metadata.delay_reason === "string" ? `Delay: ${metadata.delay_reason}` : null,
+    typeof metadata.result === "string"
+      ? `QC: ${metadata.result.replaceAll("_", " ")}`
+      : null,
+    typeof metadata.responsibility === "string"
+      ? `Responsibility: ${metadata.responsibility.replaceAll("_", " ")}`
+      : null,
     typeof metadata.comment === "string" ? metadata.comment : null,
   ].filter(Boolean);
 
@@ -402,6 +425,7 @@ export async function getCaseDetail(
 	    { data: designVersions, error: designError },
 	    { data: designApprovals, error: approvalError },
 	    { data: comments, error: commentsError },
+	    { data: qualityChecks, error: qualityError },
 	  ] = await Promise.all([
     supabase
 	      .from("cases")
@@ -467,6 +491,14 @@ export async function getCaseDetail(
 	      .eq("case_id", caseId)
 	      .order("created_at", { ascending: true })
 	      .returns<CaseCommentRow[]>(),
+	    supabase
+	      .from("quality_checks")
+	      .select("id, checked_by, result, notes, created_at")
+	      .eq("lab_id", labId)
+	      .eq("case_id", caseId)
+	      .order("created_at", { ascending: false })
+	      .limit(1)
+	      .returns<QualityCheckRow[]>(),
 	  ]);
 
 	  const error =
@@ -476,7 +508,8 @@ export async function getCaseDetail(
 	    filesError ??
 	    designError ??
 	    approvalError ??
-	    commentsError;
+	    commentsError ??
+	    qualityError;
 
   if (error) throw new Error(error.message);
   if (!row) notFound();
@@ -499,6 +532,7 @@ export async function getCaseDetail(
 	        ),
 	        ...(comments ?? []).map((comment) => comment.author_id),
 	        ...(timeline ?? []).map((event) => event.actor_id),
+	        ...(qualityChecks ?? []).map((check) => check.checked_by),
 	      ]
 	        .filter((id): id is string => Boolean(id)),
 	    ),
@@ -618,6 +652,10 @@ export async function getCaseDetail(
 	    userId: session.userId,
 	    item: commentAccess,
 	  });
+	  const latestQualityCheck = qualityChecks?.[0];
+	  const latestQualityProfile = latestQualityCheck?.checked_by
+	    ? profileMap.get(latestQualityCheck.checked_by)
+	    : null;
 
 	  return {
 	    ...base,
@@ -669,6 +707,28 @@ export async function getCaseDetail(
 	      }),
 	    ),
 	    allowedCommentVisibilities,
+	    latestQualityCheck: latestQualityCheck
+	      ? {
+	          result: latestQualityCheck.result,
+	          notes: latestQualityCheck.notes,
+	          checkedByName:
+	            latestQualityProfile?.full_name ??
+	            latestQualityProfile?.email ??
+	            (latestQualityCheck.checked_by ? "Unknown user" : "System"),
+	          createdAt: latestQualityCheck.created_at,
+	        }
+	      : null,
+	    canManageQualityControl:
+	      session.roles.includes("super_admin") ||
+	      session.roles.includes("lab_owner") ||
+	      session.roles.includes("lab_manager") ||
+	      (session.roles.includes("technician") &&
+	        accessCase.assignedTechnicianId === session.userId),
+	    canManageRemakes:
+	      session.roles.includes("super_admin") ||
+	      session.roles.includes("lab_owner") ||
+	      session.roles.includes("lab_manager") ||
+	      session.roles.includes("reception"),
     stageHistory: (stageLogs ?? []).map((item) => ({
       id: item.id,
       fromStage: item.from_stage,

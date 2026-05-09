@@ -9,6 +9,7 @@ import type {
 } from "@/lib/files/case-file-rules";
 import type { DesignStatus } from "@/lib/design/design-workflow";
 import type { CommentVisibility } from "@/lib/comments/comment-permissions";
+import type { QcResult, RemakeResponsibility } from "@/lib/quality/qc-rules";
 import type { CasePriority } from "@/types/app";
 
 export type Json =
@@ -389,8 +390,11 @@ export type Database = {
 	          case_id: string;
 	          checked_by: string | null;
 	          passed: boolean;
-	          result: string;
+	          result: QcResult;
+	          checklist: Json;
+	          previous_stage: ProductionStage | null;
 	          notes: string | null;
+	          completed_at: string | null;
 	          created_at: string;
 	        };
 	        Insert: {
@@ -399,13 +403,70 @@ export type Database = {
 	          case_id: string;
 	          checked_by?: string | null;
 	          passed?: boolean;
-	          result?: string;
+	          result?: QcResult;
+	          checklist?: Json;
+	          previous_stage?: ProductionStage | null;
 	          notes?: string | null;
+	          completed_at?: string | null;
 	          created_at?: string;
 	        };
 	        Update: Partial<
 	          Database["public"]["Tables"]["quality_checks"]["Insert"]
 	        >;
+	        Relationships: [];
+	      };
+	      quality_check_items: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          quality_check_id: string;
+	          label: string;
+	          result: QcResult;
+	          notes: string | null;
+	          created_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          quality_check_id: string;
+	          label: string;
+	          result?: QcResult;
+	          notes?: string | null;
+	          created_at?: string;
+	        };
+	        Update: Partial<
+	          Database["public"]["Tables"]["quality_check_items"]["Insert"]
+	        >;
+	        Relationships: [];
+	      };
+	      remakes: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_id: string;
+	          original_case_id: string | null;
+	          reason: string;
+	          responsibility: RemakeResponsibility;
+	          cost_impact: number;
+	          notes: string | null;
+	          photo_file_ids: Json;
+	          created_by: string | null;
+	          created_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          case_id: string;
+	          original_case_id?: string | null;
+	          reason: string;
+	          responsibility?: RemakeResponsibility;
+	          cost_impact?: number;
+	          notes?: string | null;
+	          photo_file_ids?: Json;
+	          created_by?: string | null;
+	          created_at?: string;
+	        };
+	        Update: Partial<Database["public"]["Tables"]["remakes"]["Insert"]>;
 	        Relationships: [];
 	      };
 	      case_timeline: {
@@ -695,6 +756,8 @@ export type Database = {
       case_stage: ProductionStage;
       case_priority: CasePriority;
       file_kind: IntakeFileType;
+      qc_result: QcResult;
+      remake_responsibility: RemakeResponsibility;
     };
   };
 };

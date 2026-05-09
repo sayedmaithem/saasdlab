@@ -6,6 +6,7 @@ import {
   FileStack,
   Gauge,
   Hospital,
+  RotateCcw,
   Settings,
   Truck,
   UserCog,
@@ -52,6 +53,18 @@ export const appNavigation: AppNavItem[] = [
     href: "/production",
     icon: Boxes,
     roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
+  },
+  {
+    label: "Quality",
+    href: "/quality-control",
+    icon: ClipboardCheck,
+    roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
+  },
+  {
+    label: "Remakes",
+    href: "/remakes",
+    icon: RotateCcw,
+    roles: ["super_admin", "lab_owner", "lab_manager", "reception", "accountant"],
   },
   {
     label: "Technicians",

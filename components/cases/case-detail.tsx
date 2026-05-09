@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CaseFileManager } from "@/components/files/case-file-manager";
 import { DesignWorkflow } from "@/components/design/design-workflow";
 import { CaseDiscussion } from "@/components/comments/case-discussion";
+import { QualityControlForm } from "@/components/qc/qc-form";
+import { RemakeForm } from "@/components/qc/remake-form";
 import { CaseTimeline } from "@/components/timeline/case-timeline";
 import type { CaseDetail as CaseDetailData } from "@/lib/data/cases";
 
@@ -162,6 +164,33 @@ export function CaseDetail({
 	              />
 	            </CardContent>
 	          </Card>
+
+	          {item.canManageQualityControl ? (
+	            <Card>
+	              <CardHeader><CardTitle>Quality control</CardTitle></CardHeader>
+	              <CardContent>
+	                <QualityControlForm
+	                  caseId={item.id}
+	                  workType={item.workType}
+	                  latestCheck={item.latestQualityCheck}
+	                  canManage={item.canManageQualityControl}
+	                />
+	              </CardContent>
+	            </Card>
+	          ) : null}
+
+	          {item.canManageRemakes ? (
+	            <Card>
+	              <CardHeader><CardTitle>Mark as remake</CardTitle></CardHeader>
+	              <CardContent>
+	                <RemakeForm
+	                  caseId={item.id}
+	                  files={item.files}
+	                  canManage={item.canManageRemakes}
+	                />
+	              </CardContent>
+	            </Card>
+	          ) : null}
 
           {canViewFinance ? (
             <Card>
