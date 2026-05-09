@@ -172,13 +172,14 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["doctors"]["Insert"]>;
         Relationships: [];
       };
-      cases: {
-        Row: {
-          id: string;
-          lab_id: string;
-          case_number: string;
-          patient_display: string;
-          doctor_id: string;
+	      cases: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_number: string;
+	          patient_display: string;
+	          patient_name: string | null;
+	          doctor_id: string;
           clinic_id: string;
           stage: ProductionStage;
           current_stage?: ProductionStage;
@@ -189,13 +190,26 @@ export type Database = {
           material?: string | null;
           shade: string | null;
           tooth_numbers: number[];
+          units_count?: number;
           due_date: string | null;
           is_urgent?: boolean;
           is_remake?: boolean;
+          is_warranty?: boolean;
+          requires_doctor_approval?: boolean;
           missing_info_status?: string;
+          missing_info_fields?: Json;
+          priority_score?: number;
           total_price?: number;
-          clinical_notes: string | null;
-          assigned_technician_id: string | null;
+          physical_impression_received?: boolean;
+          preparation_photo_received?: boolean;
+          implant_system?: string | null;
+          scan_body_info?: string | null;
+          bite_info?: string | null;
+          arch?: string | null;
+	          complexity?: string;
+	          clinical_notes: string | null;
+	          notes: string | null;
+	          assigned_technician_id: string | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -203,9 +217,10 @@ export type Database = {
         Insert: {
           id?: string;
           lab_id: string;
-          case_number: string;
-          patient_display: string;
-          doctor_id: string;
+	          case_number: string;
+	          patient_display: string;
+	          patient_name?: string | null;
+	          doctor_id: string;
           clinic_id: string;
           stage?: ProductionStage;
           current_stage?: ProductionStage;
@@ -216,18 +231,83 @@ export type Database = {
           material?: string | null;
           shade?: string | null;
           tooth_numbers?: number[];
+          units_count?: number;
           due_date?: string | null;
           is_urgent?: boolean;
           is_remake?: boolean;
+          is_warranty?: boolean;
+          requires_doctor_approval?: boolean;
           missing_info_status?: string;
+          missing_info_fields?: Json;
+          priority_score?: number;
           total_price?: number;
-          clinical_notes?: string | null;
-          assigned_technician_id?: string | null;
+          physical_impression_received?: boolean;
+          preparation_photo_received?: boolean;
+          implant_system?: string | null;
+          scan_body_info?: string | null;
+          bite_info?: string | null;
+          arch?: string | null;
+	          complexity?: string;
+	          clinical_notes?: string | null;
+	          notes?: string | null;
+	          assigned_technician_id?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["cases"]["Insert"]>;
+        Relationships: [];
+      };
+      case_stage_logs: {
+        Row: {
+          id: string;
+          lab_id: string;
+          case_id: string;
+	          from_stage: ProductionStage | null;
+	          to_stage: ProductionStage;
+	          changed_by: string | null;
+	          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          case_id: string;
+	          from_stage?: ProductionStage | null;
+	          to_stage: ProductionStage;
+	          changed_by?: string | null;
+	          notes?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["case_stage_logs"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      case_timeline: {
+        Row: {
+          id: string;
+          lab_id: string;
+	          case_id: string;
+	          actor_id: string | null;
+	          event_type: string;
+          title: string;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+	          case_id: string;
+	          actor_id?: string | null;
+	          event_type: string;
+          title: string;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["case_timeline"]["Insert"]
+        >;
         Relationships: [];
       };
       doctor_price_lists: {
