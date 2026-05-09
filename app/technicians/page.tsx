@@ -10,7 +10,17 @@ export default async function TechniciansPage() {
 
   return (
     <AppShell labName="LabFlow" session={session} activeHref="/technicians">
-      <ModuleScaffold route={foundationRoutes.technicians} />
+      <div className="space-y-5">
+        <ModuleScaffold route={foundationRoutes.technicians} />
+        <div>
+          <a
+            href="/technicians/workspace"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+          >
+            Open technician workspace
+          </a>
+        </div>
+      </div>
     </AppShell>
   );
 }

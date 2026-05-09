@@ -1,16 +1,21 @@
 export const dynamic = "force-dynamic";
 
 import { AppShell } from "@/components/layout/app-shell";
-import { ModuleScaffold } from "@/components/layout/module-scaffold";
+import { ProductionBoard } from "@/components/production/production-board";
 import { requireRouteAccess } from "@/lib/auth/guards";
-import { foundationRoutes } from "@/lib/constants/modules";
+import { getProductionBoardData } from "@/lib/data/production";
+import { canManageProductionBoard } from "@/lib/production/stage-rules";
 
 export default async function ProductionPage() {
   const session = await requireRouteAccess("/production");
+  const data = await getProductionBoardData(session);
 
   return (
     <AppShell labName="LabFlow" session={session} activeHref="/production">
-      <ModuleScaffold route={foundationRoutes.production} />
+      <ProductionBoard
+        data={data}
+        canManageBoard={canManageProductionBoard(session.roles)}
+      />
     </AppShell>
   );
 }

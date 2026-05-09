@@ -262,32 +262,150 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["cases"]["Insert"]>;
         Relationships: [];
       };
-      case_stage_logs: {
-        Row: {
-          id: string;
-          lab_id: string;
-          case_id: string;
-	          from_stage: ProductionStage | null;
-	          to_stage: ProductionStage;
-	          changed_by: string | null;
-	          notes: string | null;
-          created_at: string;
-        };
-        Insert: {
+	      case_stage_logs: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_id: string;
+		          from_stage: ProductionStage | null;
+		          to_stage: ProductionStage;
+		          changed_by: string | null;
+		          moved_by: string | null;
+		          started_at: string | null;
+		          completed_at: string | null;
+		          delay_reason: string | null;
+		          notes: string | null;
+	          created_at: string;
+	        };
+	        Insert: {
           id?: string;
           lab_id: string;
           case_id: string;
-	          from_stage?: ProductionStage | null;
-	          to_stage: ProductionStage;
-	          changed_by?: string | null;
-	          notes?: string | null;
-          created_at?: string;
-        };
+		          from_stage?: ProductionStage | null;
+		          to_stage: ProductionStage;
+		          changed_by?: string | null;
+		          moved_by?: string | null;
+		          started_at?: string | null;
+		          completed_at?: string | null;
+		          delay_reason?: string | null;
+		          notes?: string | null;
+	          created_at?: string;
+	        };
         Update: Partial<
           Database["public"]["Tables"]["case_stage_logs"]["Insert"]
         >;
-        Relationships: [];
-      };
+	        Relationships: [];
+	      };
+	      technicians: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          profile_id: string | null;
+	          display_name: string;
+	          phone: string | null;
+	          employment_status: string;
+	          productivity_score: number;
+	          created_at: string;
+	          updated_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          profile_id?: string | null;
+	          display_name: string;
+	          phone?: string | null;
+	          employment_status?: string;
+	          productivity_score?: number;
+	          created_at?: string;
+	          updated_at?: string;
+	        };
+	        Update: Partial<Database["public"]["Tables"]["technicians"]["Insert"]>;
+	        Relationships: [];
+	      };
+	      technician_skills: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          technician_id: string;
+	          skill: string;
+	          level: number;
+	          created_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          technician_id: string;
+	          skill: string;
+	          level?: number;
+	          created_at?: string;
+	        };
+	        Update: Partial<
+	          Database["public"]["Tables"]["technician_skills"]["Insert"]
+	        >;
+	        Relationships: [];
+	      };
+	      tasks: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_id: string;
+	          technician_id: string | null;
+	          stage: ProductionStage;
+	          status: string;
+	          title: string;
+	          instructions: string | null;
+	          started_at: string | null;
+	          due_at: string | null;
+	          completed_at: string | null;
+	          created_by: string | null;
+	          created_at: string;
+	          updated_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          case_id: string;
+	          technician_id?: string | null;
+	          stage: ProductionStage;
+	          status?: string;
+	          title: string;
+	          instructions?: string | null;
+	          started_at?: string | null;
+	          due_at?: string | null;
+	          completed_at?: string | null;
+	          created_by?: string | null;
+	          created_at?: string;
+	          updated_at?: string;
+	        };
+	        Update: Partial<Database["public"]["Tables"]["tasks"]["Insert"]>;
+	        Relationships: [];
+	      };
+	      quality_checks: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_id: string;
+	          checked_by: string | null;
+	          passed: boolean;
+	          result: string;
+	          notes: string | null;
+	          created_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          case_id: string;
+	          checked_by?: string | null;
+	          passed?: boolean;
+	          result?: string;
+	          notes?: string | null;
+	          created_at?: string;
+	        };
+	        Update: Partial<
+	          Database["public"]["Tables"]["quality_checks"]["Insert"]
+	        >;
+	        Relationships: [];
+	      };
       case_timeline: {
         Row: {
           id: string;
