@@ -58,6 +58,7 @@ export const intakeFileTypes = [
   "dicom",
   "pdf",
   "image",
+  "zip",
   "exocad",
   "other",
 ] as const;

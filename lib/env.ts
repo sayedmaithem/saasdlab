@@ -5,6 +5,10 @@ export function hasSupabaseEnv() {
   return Boolean(supabaseUrl && supabaseAnonKey);
 }
 
+export function canUsePreviewAuth() {
+  return !hasSupabaseEnv() && process.env.NODE_ENV !== "production";
+}
+
 export function getSupabaseEnv() {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error(
