@@ -61,21 +61,47 @@ export type Database = {
       profiles: {
         Row: {
           id: string;
+          lab_id: string | null;
           full_name: string | null;
           email: string | null;
           phone: string | null;
+          role: AppRole | null;
+          is_active: boolean;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id: string;
+          lab_id?: string | null;
           full_name?: string | null;
           email?: string | null;
           phone?: string | null;
+          role?: AppRole | null;
+          is_active?: boolean;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+        Relationships: [];
+      };
+      user_roles: {
+        Row: {
+          id: string;
+          lab_id: string;
+          user_id: string;
+          role: AppRole;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          user_id: string;
+          role: AppRole;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["user_roles"]["Insert"]>;
         Relationships: [];
       };
       clinics: {
