@@ -14,8 +14,16 @@ export type MissingInformationResult = {
 
 function hasScanFile(files: UploadedFileSignal[]) {
   return files.some((file) =>
-    ["scan", "intake"].includes(file.category) ||
+    ["scan", "intake", "scan_files", "doctor_uploads"].includes(file.category) ||
     ["stl", "obj", "ply"].includes(file.fileType ?? ""),
+  );
+}
+
+function hasPreparationPhoto(files: UploadedFileSignal[]) {
+  return files.some(
+    (file) =>
+      ["photos", "doctor_uploads"].includes(file.category) &&
+      file.fileType === "image",
   );
 }
 
@@ -47,7 +55,11 @@ export function checkMissingInformation(
     }
   }
 
-  if (caseData.workType === "emax" && !caseData.preparationPhotoReceived) {
+  if (
+    caseData.workType === "emax" &&
+    !caseData.preparationPhotoReceived &&
+    !hasPreparationPhoto(uploadedFiles)
+  ) {
     recommendedMissing.push("preparation_photo");
   }
 

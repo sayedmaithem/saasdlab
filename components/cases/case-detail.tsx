@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CaseFileManager } from "@/components/files/case-file-manager";
 import type { CaseDetail as CaseDetailData } from "@/lib/data/cases";
 
 function money(value: number) {
@@ -94,8 +95,8 @@ export function CaseDetail({
               {item.stageHistory.map((stage) => (
                 <div key={stage.id} className="rounded-lg border bg-background p-3 text-sm">
                   <p className="font-semibold">
-                    {stage.fromStage?.replaceAll("_", " ") ?? "Start"} →{" "}
-                    {stage.toStage.replaceAll("_", " ")}
+	                    {stage.fromStage?.replaceAll("_", " ") ?? "Start"} -{" "}
+	                    {stage.toStage.replaceAll("_", " ")}
                   </p>
                   <p className="text-muted-foreground">{stage.notes ?? stage.createdAt}</p>
                 </div>
@@ -124,12 +125,18 @@ export function CaseDetail({
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader><CardTitle>Files</CardTitle></CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              {item.filesCount} stored files. Full cloud file manager comes in Phase 6.
-            </CardContent>
-          </Card>
+	          <Card>
+	            <CardHeader><CardTitle>Files</CardTitle></CardHeader>
+	            <CardContent>
+	              <CaseFileManager
+	                labId={item.labId}
+	                caseId={item.id}
+	                files={item.files}
+	                allowedUploadCategories={item.allowedUploadCategories}
+	                allowedUploadVisibilities={item.allowedUploadVisibilities}
+	              />
+	            </CardContent>
+	          </Card>
 
           <Card>
             <CardHeader><CardTitle>Design versions</CardTitle></CardHeader>

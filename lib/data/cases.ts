@@ -3,6 +3,16 @@ import {
   productionStages,
   type ProductionStage,
 } from "@/lib/constants/workflow";
+import {
+  getAllowedUploadCategories,
+  getAllowedUploadVisibilities,
+  canViewCaseFile,
+  type CaseFileAccessCase,
+} from "@/lib/files/case-file-permissions";
+import type {
+  CaseFileCategory,
+  CaseFileVisibility,
+} from "@/lib/files/case-file-rules";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { AuthSessionContext } from "@/types/app";
 
@@ -34,6 +44,7 @@ export type CaseListItem = {
 };
 
 export type CaseDetail = CaseListItem & {
+  labId: string;
   shade: string | null;
   unitsCount: number;
   toothNumbers: number[];
@@ -57,10 +68,29 @@ export type CaseDetail = CaseListItem & {
     createdAt: string;
   }>;
   filesCount: number;
+  files: CaseFileItem[];
+  allowedUploadCategories: CaseFileCategory[];
+  allowedUploadVisibilities: CaseFileVisibility[];
+};
+
+export type CaseFileItem = {
+  id: string;
+  caseId: string;
+  designVersionId: string | null;
+  category: CaseFileCategory;
+  visibility: CaseFileVisibility;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  mimeType: string | null;
+  uploadedBy: string | null;
+  uploadedByName: string;
+  uploadedAt: string;
 };
 
 type CaseRow = {
   id: string;
+  lab_id?: string;
   case_number: string;
   doctor_id: string;
   clinic_id: string;
@@ -76,11 +106,13 @@ type CaseRow = {
   due_date: string | null;
   is_urgent: boolean | null;
   missing_info_status: string | null;
-  doctors: { display_name: string } | null;
+  assigned_technician_id?: string | null;
+  doctors: { display_name: string; profile_id?: string | null } | null;
   clinics: { name: string } | null;
 };
 
 type CaseDetailRow = CaseRow & {
+  lab_id: string;
   shade: string | null;
   units_count: number | null;
   tooth_numbers: number[] | null;
@@ -91,6 +123,24 @@ type CaseDetailRow = CaseRow & {
   clinical_notes: string | null;
   total_price: number | null;
   missing_info_fields: unknown;
+  assigned_technician_id: string | null;
+  doctors: { display_name: string; profile_id: string | null } | null;
+};
+
+type CaseFileRow = {
+  id: string;
+  case_id: string;
+  design_version_id: string | null;
+  category: CaseFileCategory;
+  visibility: CaseFileVisibility;
+  file_name: string;
+  file_type: string | null;
+  file_kind: string;
+  file_size: number | null;
+  size_bytes: number | null;
+  mime_type: string | null;
+  uploaded_by: string | null;
+  created_at: string;
 };
 
 function assertLab(session: AuthSessionContext) {
@@ -205,16 +255,16 @@ export async function getCaseDetail(
 ) {
   const labId = assertLab(session);
   const supabase = await createSupabaseServerClient();
-  const [
-    { data: row, error: caseError },
-    { data: stageLogs, error: stageError },
-    { data: timeline, error: timelineError },
-    { count: filesCount, error: filesError },
-  ] = await Promise.all([
+	  const [
+	    { data: row, error: caseError },
+	    { data: stageLogs, error: stageError },
+	    { data: timeline, error: timelineError },
+	    { data: files, error: filesError },
+	  ] = await Promise.all([
     supabase
-      .from("cases")
-      .select(
-        "id, case_number, doctor_id, clinic_id, patient_name, patient_display, work_type, restoration_type, material, status, current_stage, stage, priority_score, due_date, is_urgent, missing_info_status, doctors(display_name), clinics(name), shade, units_count, tooth_numbers, is_remake, is_warranty, requires_doctor_approval, notes, clinical_notes, total_price, missing_info_fields",
+	      .from("cases")
+	      .select(
+	        "id, lab_id, case_number, doctor_id, clinic_id, patient_name, patient_display, work_type, restoration_type, material, status, current_stage, stage, priority_score, due_date, is_urgent, missing_info_status, assigned_technician_id, doctors(display_name, profile_id), clinics(name), shade, units_count, tooth_numbers, is_remake, is_warranty, requires_doctor_approval, notes, clinical_notes, total_price, missing_info_fields",
       )
       .eq("lab_id", labId)
       .eq("id", caseId)
@@ -248,25 +298,87 @@ export async function getCaseDetail(
           created_at: string;
         }>
       >(),
-    supabase
-      .from("case_files")
-      .select("id", { count: "exact", head: true })
-      .eq("lab_id", labId)
-      .eq("case_id", caseId),
-  ]);
+	    supabase
+	      .from("case_files")
+	      .select(
+	        "id, case_id, design_version_id, category, visibility, file_name, file_type, file_kind, file_size, size_bytes, mime_type, uploaded_by, created_at",
+	      )
+	      .eq("lab_id", labId)
+	      .eq("case_id", caseId)
+	      .order("created_at", { ascending: false })
+	      .returns<CaseFileRow[]>(),
+	  ]);
 
   const error = caseError ?? stageError ?? timelineError ?? filesError;
 
   if (error) throw new Error(error.message);
   if (!row) notFound();
 
-  const base = toListItem(row);
-  const missingInfoFields = Array.isArray(row.missing_info_fields)
-    ? row.missing_info_fields.filter((item): item is string => typeof item === "string")
-    : [];
+	  const base = toListItem(row);
+	  const accessCase: CaseFileAccessCase = {
+	    labId: row.lab_id,
+	    doctorProfileId: row.doctors?.profile_id ?? null,
+	    assignedTechnicianId: row.assigned_technician_id,
+	  };
+	  const missingInfoFields = Array.isArray(row.missing_info_fields)
+	    ? row.missing_info_fields.filter((item): item is string => typeof item === "string")
+	    : [];
+	  const uploaderIds = Array.from(
+	    new Set(
+	      (files ?? [])
+	        .map((file) => file.uploaded_by)
+	        .filter((id): id is string => Boolean(id)),
+	    ),
+	  );
+	  const { data: uploaders, error: uploadersError } = uploaderIds.length
+	    ? await supabase
+	        .from("profiles")
+	        .select("id, full_name, email")
+	        .in("id", uploaderIds)
+	        .returns<Array<{ id: string; full_name: string | null; email: string | null }>>()
+	    : { data: [], error: null };
 
-  return {
-    ...base,
+	  if (uploadersError) throw new Error(uploadersError.message);
+
+	  const uploaderMap = new Map(
+	    (uploaders ?? []).map((profile) => [
+	      profile.id,
+	      profile.full_name ?? profile.email ?? "Unknown user",
+	    ]),
+	  );
+	  const visibleFiles = (files ?? [])
+	    .filter((file) =>
+	      canViewCaseFile({
+	        roles: session.roles,
+	        userId: session.userId,
+	        item: accessCase,
+	        file: {
+	          category: file.category,
+	          visibility: file.visibility,
+	          uploadedBy: file.uploaded_by,
+	        },
+	      }),
+	    )
+	    .map((file) => ({
+	      id: file.id,
+	      caseId: file.case_id,
+	      designVersionId: file.design_version_id,
+	      category: file.category,
+	      visibility: file.visibility,
+	      fileName: file.file_name,
+	      fileType: file.file_type ?? file.file_kind,
+	      fileSize: Number(file.file_size ?? file.size_bytes ?? 0),
+	      mimeType: file.mime_type,
+	      uploadedBy: file.uploaded_by,
+	      uploadedByName: file.uploaded_by
+	        ? uploaderMap.get(file.uploaded_by) ?? "Unknown user"
+	        : "System",
+	      uploadedAt: file.created_at,
+	    }));
+
+	  return {
+	    ...base,
+	    labId: row.lab_id,
     shade: row.shade,
     unitsCount: Number(row.units_count ?? 1),
     toothNumbers: row.tooth_numbers ?? [],
@@ -274,9 +386,20 @@ export async function getCaseDetail(
     isWarranty: Boolean(row.is_warranty),
     requiresDoctorApproval: Boolean(row.requires_doctor_approval),
     notes: row.notes ?? row.clinical_notes,
-    totalPrice: canViewFinance ? Number(row.total_price ?? 0) : 0,
-    missingInfoFields,
-    filesCount: filesCount ?? 0,
+	    totalPrice: canViewFinance ? Number(row.total_price ?? 0) : 0,
+	    missingInfoFields,
+	    filesCount: visibleFiles.length,
+	    files: visibleFiles,
+	    allowedUploadCategories: getAllowedUploadCategories({
+	      roles: session.roles,
+	      userId: session.userId,
+	      item: accessCase,
+	    }),
+	    allowedUploadVisibilities: getAllowedUploadVisibilities({
+	      roles: session.roles,
+	      userId: session.userId,
+	      item: accessCase,
+	    }),
     stageHistory: (stageLogs ?? []).map((item) => ({
       id: item.id,
       fromStage: item.from_stage,

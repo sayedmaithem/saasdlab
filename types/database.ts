@@ -3,6 +3,10 @@ import type {
   IntakeFileType,
   ProductionStage,
 } from "@/lib/constants/workflow";
+import type {
+  CaseFileCategory,
+  CaseFileVisibility,
+} from "@/lib/files/case-file-rules";
 import type { CasePriority } from "@/types/app";
 
 export type Json =
@@ -401,28 +405,38 @@ export type Database = {
           lab_id: string;
           case_id: string;
           design_version_id: string | null;
-          bucket: string;
-          storage_path: string;
-          file_kind: IntakeFileType;
-          file_name: string;
-          mime_type: string | null;
-          size_bytes: number | null;
-          uploaded_by: string | null;
-          created_at: string;
-        };
+	          bucket: string;
+	          storage_path: string;
+	          category: CaseFileCategory;
+	          file_path: string;
+	          file_kind: IntakeFileType;
+	          file_type: IntakeFileType;
+	          file_name: string;
+	          mime_type: string | null;
+	          size_bytes: number | null;
+	          file_size: number | null;
+	          visibility: CaseFileVisibility;
+	          uploaded_by: string | null;
+	          created_at: string;
+	        };
         Insert: {
           id?: string;
           lab_id: string;
           case_id: string;
-          design_version_id?: string | null;
-          bucket?: string;
-          storage_path: string;
-          file_kind: IntakeFileType;
-          file_name: string;
-          mime_type?: string | null;
-          size_bytes?: number | null;
-          uploaded_by?: string | null;
-          created_at?: string;
+	          design_version_id?: string | null;
+	          bucket?: string;
+	          storage_path: string;
+	          category?: CaseFileCategory;
+	          file_path?: string;
+	          file_kind: IntakeFileType;
+	          file_type?: IntakeFileType;
+	          file_name: string;
+	          mime_type?: string | null;
+	          size_bytes?: number | null;
+	          file_size?: number | null;
+	          visibility?: CaseFileVisibility;
+	          uploaded_by?: string | null;
+	          created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["case_files"]["Insert"]>;
         Relationships: [];
