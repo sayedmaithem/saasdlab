@@ -1,9 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { PlusCircle } from "lucide-react";
 import {
   createCaseAction,
   type CreateCaseActionState,
@@ -14,33 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createCaseSchema, type CreateCaseInput } from "@/lib/validations/case";
 import type { SelectOption } from "@/lib/types";
-
-const defaultValues = {
-  patientDisplay: "",
-  doctorId: "",
-  clinicId: "",
-  restorationType: "",
-  shade: "",
-  toothNumbers: "",
-  dueDate: "",
-  priority: "normal" as const,
-  notes: "",
-};
-
-function fieldMessage(message?: string) {
-  if (!message) {
-    return null;
-  }
-
-  return <p className="mt-1 text-xs text-destructive">{message}</p>;
-}
 
 export function NewCaseForm({
   doctors,
   clinics,
-  source,
 }: {
   doctors: SelectOption[];
   clinics: SelectOption[];
@@ -50,34 +25,10 @@ export function NewCaseForm({
   const [actionState, setActionState] = useState<CreateCaseActionState | null>(
     null,
   );
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<CreateCaseInput>({
-    resolver: zodResolver(createCaseSchema),
-    defaultValues,
-  });
 
-  function onSubmit(values: CreateCaseInput) {
-    const formData = new FormData();
-
-    Object.entries(values).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        formData.set(key, value.join(","));
-      } else {
-        formData.set(key, value ?? "");
-      }
-    });
-
+  function submit(formData: FormData) {
     startTransition(async () => {
-      const result = await createCaseAction(formData);
-      setActionState(result);
-
-      if (result.ok) {
-        reset(defaultValues);
-      }
+      setActionState(await createCaseAction(formData));
     });
   }
 
@@ -87,29 +38,11 @@ export function NewCaseForm({
         <CardTitle>Register production case</CardTitle>
       </CardHeader>
       <CardContent>
-        <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+        <form action={submit} className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <Label htmlFor="patientDisplay">Patient display</Label>
-              <Input
-                id="patientDisplay"
-                placeholder="Initials or approved display name"
-                {...register("patientDisplay")}
-              />
-              {fieldMessage(errors.patientDisplay?.message)}
-            </div>
-            <div>
-              <Label htmlFor="restorationType">Restoration type</Label>
-              <Input
-                id="restorationType"
-                placeholder="Zirconia crown, implant bridge..."
-                {...register("restorationType")}
-              />
-              {fieldMessage(errors.restorationType?.message)}
-            </div>
-            <div>
               <Label htmlFor="doctorId">Doctor</Label>
-              <Select id="doctorId" {...register("doctorId")}>
+              <Select id="doctorId" name="doctorId" required>
                 <option value="">Choose doctor</option>
                 {doctors.map((doctor) => (
                   <option key={doctor.value} value={doctor.value}>
@@ -117,11 +50,10 @@ export function NewCaseForm({
                   </option>
                 ))}
               </Select>
-              {fieldMessage(errors.doctorId?.message)}
             </div>
             <div>
               <Label htmlFor="clinicId">Clinic</Label>
-              <Select id="clinicId" {...register("clinicId")}>
+              <Select id="clinicId" name="clinicId" required>
                 <option value="">Choose clinic</option>
                 {clinics.map((clinic) => (
                   <option key={clinic.value} value={clinic.value}>
@@ -129,53 +61,112 @@ export function NewCaseForm({
                   </option>
                 ))}
               </Select>
-              {fieldMessage(errors.clinicId?.message)}
             </div>
             <div>
-              <Label htmlFor="toothNumbers">Tooth numbers</Label>
-              <Input
-                id="toothNumbers"
-                placeholder="11, 12, 21"
-                {...register("toothNumbers")}
-              />
-              {fieldMessage(errors.toothNumbers?.message)}
+              <Label htmlFor="patientName">Patient name</Label>
+              <Input id="patientName" name="patientName" required />
+            </div>
+            <div>
+              <Label htmlFor="workType">Work type</Label>
+              <Select id="workType" name="workType" required>
+                <option value="zircon_crown">Zircon Crown</option>
+                <option value="emax">Emax</option>
+                <option value="implant">Implant</option>
+                <option value="night_guard">Night Guard</option>
+                <option value="other">Other</option>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="material">Material</Label>
+              <Input id="material" name="material" placeholder="Zirconia, Emax..." />
             </div>
             <div>
               <Label htmlFor="shade">Shade</Label>
-              <Input id="shade" placeholder="A2, BL2..." {...register("shade")} />
-              {fieldMessage(errors.shade?.message)}
+              <Input id="shade" name="shade" placeholder="A2, BL2..." />
+            </div>
+            <div>
+              <Label htmlFor="unitsCount">Units count</Label>
+              <Input
+                id="unitsCount"
+                name="unitsCount"
+                type="number"
+                min={1}
+                defaultValue={1}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="toothNumbers">Tooth numbers</Label>
+              <Input id="toothNumbers" name="toothNumbers" placeholder="11, 12, 21" />
             </div>
             <div>
               <Label htmlFor="dueDate">Due date</Label>
-              <Input id="dueDate" type="date" {...register("dueDate")} />
-              {fieldMessage(errors.dueDate?.message)}
+              <Input id="dueDate" name="dueDate" type="date" />
             </div>
             <div>
-              <Label htmlFor="priority">Priority</Label>
-              <Select id="priority" {...register("priority")}>
-                <option value="low">Low</option>
-                <option value="normal">Normal</option>
-                <option value="urgent">Urgent</option>
+              <Label htmlFor="complexity">Complexity</Label>
+              <Select id="complexity" name="complexity" defaultValue="standard">
+                <option value="simple">Simple</option>
+                <option value="standard">Standard</option>
+                <option value="complex">Complex</option>
               </Select>
-              {fieldMessage(errors.priority?.message)}
+            </div>
+            <div>
+              <Label htmlFor="implantSystem">Implant system</Label>
+              <Input id="implantSystem" name="implantSystem" />
+            </div>
+            <div>
+              <Label htmlFor="scanBodyInfo">Scan body info</Label>
+              <Input id="scanBodyInfo" name="scanBodyInfo" />
+            </div>
+            <div>
+              <Label htmlFor="biteInfo">Bite info</Label>
+              <Input id="biteInfo" name="biteInfo" />
+            </div>
+            <div>
+              <Label htmlFor="arch">Arch</Label>
+              <Select id="arch" name="arch">
+                <option value="">Not applicable</option>
+                <option value="upper">Upper</option>
+                <option value="lower">Lower</option>
+                <option value="both">Both</option>
+              </Select>
             </div>
           </div>
-          <div>
-            <Label htmlFor="notes">Clinical notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Bite notes, doctor instructions, try-in expectations..."
-              {...register("notes")}
-            />
-            {fieldMessage(errors.notes?.message)}
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {[
+              ["isUrgent", "Urgent"],
+              ["isRemake", "Remake"],
+              ["isWarranty", "Warranty"],
+              ["requiresDoctorApproval", "Requires doctor approval"],
+              ["physicalImpressionReceived", "Physical impression received"],
+              ["preparationPhotoReceived", "Preparation photo received"],
+            ].map(([name, label]) => (
+              <label key={name} className="flex items-center gap-2 text-sm font-medium">
+                <input name={name} type="checkbox" className="size-4" />
+                {label}
+              </label>
+            ))}
           </div>
 
-          {source === "preview" ? (
-            <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
-              Preview mode: validation runs locally, but insert is blocked until
-              Supabase env vars and the migration are configured.
+          <div>
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              name="notes"
+              placeholder="Doctor instructions, occlusion notes, try-in expectations..."
+            />
+          </div>
+
+          <div className="rounded-lg border bg-background p-4">
+            <p className="text-sm font-semibold">Initial file uploads</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Optional cloud uploads are handled from the case files section
+              after the case is created. This keeps storage metadata and RLS
+              paths tied to a real case id.
             </p>
-          ) : null}
+          </div>
 
           {actionState ? (
             <p
@@ -190,7 +181,6 @@ export function NewCaseForm({
           ) : null}
 
           <Button type="submit" disabled={isPending}>
-            <PlusCircle aria-hidden="true" />
             {isPending ? "Creating..." : "Create case"}
           </Button>
         </form>

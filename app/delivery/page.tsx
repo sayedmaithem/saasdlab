@@ -1,11 +1,17 @@
-import { AppShell } from "@/components/layout/app-shell";
-import { ModuleScaffold } from "@/components/layout/module-scaffold";
-import { foundationRoutes } from "@/lib/constants/modules";
+export const dynamic = "force-dynamic";
 
-export default function DeliveryPage() {
+import { AppShell } from "@/components/layout/app-shell";
+import { DeliveryDashboard } from "@/components/delivery/delivery-dashboard";
+import { requireRouteAccess } from "@/lib/auth/guards";
+import { getDeliveryData } from "@/lib/data/delivery";
+
+export default async function DeliveryPage() {
+  const session = await requireRouteAccess("/delivery");
+  const data = await getDeliveryData(session);
+
   return (
-    <AppShell labName="LabFlow" activeHref="/delivery">
-      <ModuleScaffold route={foundationRoutes.delivery} />
+    <AppShell labName="LabFlow" session={session} activeHref="/delivery">
+      <DeliveryDashboard items={data.items} deliveryPeople={data.deliveryPeople} />
     </AppShell>
   );
 }
