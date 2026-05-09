@@ -50,19 +50,19 @@ export const appNavigation: AppNavItem[] = [
     label: "Technicians",
     href: "/technicians",
     icon: UserCog,
-    roles: ["super_admin", "lab_owner", "lab_manager"],
+    roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
   },
   {
     label: "Invoices",
     href: "/invoices",
     icon: BadgeDollarSign,
-    roles: ["super_admin", "lab_owner", "lab_manager", "accountant"],
+    roles: ["super_admin", "lab_owner", "accountant", "doctor"],
   },
   {
     label: "Payments",
     href: "/payments",
     icon: WalletCards,
-    roles: ["super_admin", "lab_owner", "lab_manager", "accountant"],
+    roles: ["super_admin", "lab_owner", "accountant"],
   },
   {
     label: "Delivery",
@@ -80,12 +80,12 @@ export const appNavigation: AppNavItem[] = [
     label: "Settings",
     href: "/settings",
     icon: Settings,
-    roles: ["super_admin", "lab_owner", "lab_manager"],
+    roles: ["super_admin", "lab_owner"],
   },
   {
     label: "Doctor Portal",
     href: "/doctor-portal",
     icon: ClipboardCheck,
-    roles: ["doctor"],
+    roles: ["super_admin", "lab_owner", "doctor"],
   },
 ];
