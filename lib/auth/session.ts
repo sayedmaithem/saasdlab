@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { hasSupabaseEnv } from "@/lib/env";
+import { canUsePreviewAuth, hasSupabaseEnv } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { AppRole } from "@/lib/constants/roles";
 import type { AuthSessionContext } from "@/types/app";
@@ -20,6 +20,18 @@ type ProfileRow = {
 };
 
 export async function getCurrentSessionContext(): Promise<AuthSessionContext | null> {
+  if (canUsePreviewAuth()) {
+    return {
+      userId: "00000000-0000-4000-8000-000000000001",
+      email: "owner@labflow.local",
+      fullName: "Preview Lab Owner",
+      phone: null,
+      role: "lab_owner",
+      activeLabId: "00000000-0000-4000-8000-000000000001",
+      roles: ["lab_owner"],
+    };
+  }
+
   if (!hasSupabaseEnv()) {
     return null;
   }
