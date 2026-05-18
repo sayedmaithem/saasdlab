@@ -44,9 +44,17 @@ export function CaseDetail({
             </Badge>
           </div>
         </div>
-        <p className="text-sm font-medium text-muted-foreground">
-          Due: {item.dueDate ?? "Not set"}
-        </p>
+        <div className="flex flex-col items-end gap-2">
+          <p className="text-sm font-medium text-muted-foreground">
+            Due: {item.dueDate ?? "Not set"}
+          </p>
+          <a
+            href={`/cases/${item.id}/summary`}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            View case summary →
+          </a>
+        </div>
       </div>
 
       {waitingInfo ? (

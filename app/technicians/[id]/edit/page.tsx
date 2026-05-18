@@ -5,11 +5,17 @@ import { ArrowLeft } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { TechnicianForm } from "@/components/technicians/technician-form";
 import { TechnicianPortalAccountSection } from "@/components/technicians/portal-account-section";
+import { TechnicianMatrix } from "@/components/technicians/technician-matrix";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { requireRouteAccess } from "@/lib/auth/guards";
 import { hasRole } from "@/lib/permissions";
 import { getTechnicianById } from "@/lib/data/technicians";
+import {
+  grantTechnicianStageAction,
+  revokeTechnicianStageAction,
+} from "@/app/actions/technicians";
+import { stageLabels } from "@/lib/constants/workflow";
 
 export default async function EditTechnicianPage({
   params,
@@ -48,6 +54,32 @@ export default async function EditTechnicianPage({
           technicianId={technician.id}
           profileId={technician.profileId}
           canManage={canLinkAccounts}
+        />
+        {/* Stage permission matrix — built from current skills list */}
+        <TechnicianMatrix
+          technicianId={technician.id}
+          permissions={technician.skills.map((skill) => ({
+            id: `${technician.id}-${skill.skill}`,
+            stage_id: skill.skill,
+            stage_key: skill.skill,
+            stage_name:
+              stageLabels[skill.skill as keyof typeof stageLabels] ??
+              skill.skill.replaceAll("_", " "),
+            can_work: true,
+            can_move_from: false,
+            can_move_to: false,
+          }))}
+          canManage={canManage}
+          onGrant={async (tId, stageKey) => {
+            "use server";
+            return grantTechnicianStageAction(tId, stageKey);
+          }}
+          onRevoke={async (permId) => {
+            "use server";
+            // permId in fixed-enum mode is `${technicianId}-${stageKey}`
+            const stageKey = permId.split("-").slice(1).join("-");
+            return revokeTechnicianStageAction(technician.id, stageKey);
+          }}
         />
       </div>
     </AppShell>

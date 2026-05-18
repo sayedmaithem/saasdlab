@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const CC_TABS = [
   { label: "Overview", href: "/command-center" },
   { label: "Master Data", href: "/command-center/master-data" },
+  { label: "Finance", href: "/command-center/finance" },
   { label: "Launch", href: "/command-center/launch" },
   { label: "Tasks", href: "/command-center/tasks" },
   { label: "Features", href: "/command-center/features" },
