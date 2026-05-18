@@ -343,8 +343,14 @@ export async function assignTechnicianAction(
     ]);
 
     if (technicianError) throw new Error(technicianError.message);
-    if (!technician?.profile_id) {
-      return { ok: false, message: "Technician profile is not linked to a user." };
+    if (!technician) {
+      return { ok: false, message: "Technician not found." };
+    }
+    if (!technician.profile_id) {
+      return {
+        ok: false,
+        message: `${technician.display_name} does not have a portal account yet. Open their edit page, scroll to "Portal account", and link a Supabase user UID first.`,
+      };
     }
 
     const { error: updateError } = await supabase

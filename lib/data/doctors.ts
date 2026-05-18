@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { calculateDoctorMetrics } from "@/lib/scoring/doctor-metrics";
+import { hasSupabaseEnv } from "@/lib/env";
 import type { AuthSessionContext } from "@/types/app";
 
 export type DoctorPaymentStatus = "good" | "attention" | "blocked";
@@ -77,7 +78,7 @@ type DoctorRow = {
   payment_terms: string | null;
   default_price_group: string | null;
   performance_score: number;
-  clinics: { name: string } | null;
+  profile_id: string | null;
 };
 
 type CaseMetricRow = {
@@ -135,7 +136,10 @@ function buildDoctorList(
   cases: CaseMetricRow[],
   invoices: InvoiceMetricRow[],
   approvals: DesignApprovalRow[],
+  clinics: ClinicOption[],
 ) {
+  const clinicMap = new Map(clinics.map((c) => [c.id, c.name]));
+
   return doctors.map((doctor): DoctorListItem => {
     const doctorCases = cases.filter((item) => item.doctor_id === doctor.id);
     const doctorInvoices = invoices.filter((item) => item.doctor_id === doctor.id);
@@ -166,7 +170,7 @@ function buildDoctorList(
       displayName: doctor.display_name,
       phone: doctor.phone,
       email: doctor.email,
-      clinicName: doctor.clinics?.name ?? null,
+      clinicName: doctor.default_clinic_id ? (clinicMap.get(doctor.default_clinic_id) ?? null) : null,
       isActive: doctor.is_active,
       isVip: doctor.is_vip,
       totalCases: doctorCases.length,
@@ -183,12 +187,13 @@ export async function getDoctorList(
   filters: DoctorListFilters,
 ) {
   const labId = assertLab(session);
+  if (!hasSupabaseEnv()) return { doctors: [] as DoctorListItem[], clinics: [] as ClinicOption[] };
   const supabase = await createSupabaseServerClient();
 
   let doctorsQuery = supabase
     .from("doctors")
     .select(
-      "id, display_name, phone, email, default_clinic_id, is_active, is_vip, address, notes, payment_terms, default_price_group, performance_score, clinics(name)",
+      "id, display_name, phone, email, default_clinic_id, is_active, is_vip, address, notes, payment_terms, default_price_group, performance_score",
     )
     .eq("lab_id", labId)
     .order("display_name");
@@ -261,7 +266,53 @@ export async function getDoctorList(
       cases ?? [],
       invoices ?? [],
       approvals ?? [],
+      clinics ?? [],
     ),
+    clinics: clinics ?? [],
+  };
+}
+
+export async function getDoctorForEdit(
+  session: AuthSessionContext,
+  doctorId: string,
+) {
+  const labId = assertLab(session);
+  if (!hasSupabaseEnv()) notFound();
+  const supabase = await createSupabaseServerClient();
+  const [{ data: doctor, error }, { data: clinics, error: clinicsError }] =
+    await Promise.all([
+      supabase
+        .from("doctors")
+        .select(
+          "id, display_name, phone, email, default_clinic_id, is_active, is_vip, address, notes, payment_terms, default_price_group, profile_id",
+        )
+        .eq("lab_id", labId)
+        .eq("id", doctorId)
+        .maybeSingle<DoctorRow>(),
+      supabase
+        .from("clinics")
+        .select("id, name")
+        .eq("lab_id", labId)
+        .order("name")
+        .returns<ClinicOption[]>(),
+    ]);
+
+  if (error ?? clinicsError) throw new Error((error ?? clinicsError)!.message);
+  if (!doctor) notFound();
+
+  return {
+    id: doctor.id,
+    displayName: doctor.display_name,
+    phone: doctor.phone,
+    email: doctor.email,
+    defaultClinicId: doctor.default_clinic_id,
+    isActive: doctor.is_active,
+    isVip: doctor.is_vip,
+    address: doctor.address,
+    notes: doctor.notes,
+    paymentTerms: doctor.payment_terms,
+    defaultPriceGroup: doctor.default_price_group,
+    profileId: doctor.profile_id,
     clinics: clinics ?? [],
   };
 }
@@ -271,9 +322,8 @@ export async function getDoctorProfile(
   doctorId: string,
 ): Promise<DoctorProfile> {
   const labId = assertLab(session);
+  if (!hasSupabaseEnv()) notFound();
   const supabase = await createSupabaseServerClient();
-  const list = await getDoctorList(session, {});
-  const summary = list.doctors.find((doctor) => doctor.id === doctorId);
 
   const [
     { data: doctor, error: doctorError },
@@ -285,7 +335,7 @@ export async function getDoctorProfile(
     supabase
       .from("doctors")
       .select(
-        "id, display_name, phone, email, default_clinic_id, is_active, is_vip, address, notes, payment_terms, default_price_group, performance_score, clinics(name)",
+        "id, display_name, phone, email, default_clinic_id, is_active, is_vip, address, notes, payment_terms, default_price_group, performance_score",
       )
       .eq("lab_id", labId)
       .eq("id", doctorId)
@@ -326,10 +376,11 @@ export async function getDoctorProfile(
     throw new Error(error.message);
   }
 
-  if (!doctor || !summary) {
+  if (!doctor) {
     notFound();
   }
 
+  const clinicMap = new Map((clinics ?? []).map((c) => [c.id, c.name]));
   const revenueTotal = (invoices ?? []).reduce(
     (sum, item) => sum + Number(item.total ?? 0),
     0,
@@ -356,14 +407,26 @@ export async function getDoctorProfile(
   });
 
   return {
-    ...summary,
+    id: doctor.id,
+    displayName: doctor.display_name,
+    phone: doctor.phone,
+    email: doctor.email,
+    clinicName: doctor.default_clinic_id
+      ? (clinicMap.get(doctor.default_clinic_id) ?? null)
+      : null,
+    isActive: doctor.is_active,
+    isVip: doctor.is_vip,
+    totalCases: cases?.length ?? 0,
+    totalBalance,
+    missingInformationRate: metrics.missingInformationRate,
+    remakeRate: metrics.remakeRate,
+    paymentStatus: paymentStatus(totalBalance, revenueTotal),
     address: doctor.address,
     notes: doctor.notes,
     paymentTerms: doctor.payment_terms,
     defaultPriceGroup: doctor.default_price_group,
     revenueTotal,
     paidTotal,
-    totalBalance,
     designRejectionRate: metrics.designRejectionRate,
     paymentCommitmentScore: metrics.paymentCommitmentScore,
     urgentCasePercentage: metrics.urgentCasePercentage,
@@ -387,6 +450,7 @@ export async function getDoctorPrices(
   doctorId: string,
 ) {
   const labId = assertLab(session);
+  if (!hasSupabaseEnv()) return [] as DoctorPriceItem[];
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("doctor_price_lists")
