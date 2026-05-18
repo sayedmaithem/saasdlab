@@ -78,9 +78,12 @@ begin
     return jsonb_build_object('ok', false, 'error', 'Unauthorized: lab_owner role required');
   end if;
 
-  -- Guard: super_admin cannot be granted via this UI function
-  if p_role = 'super_admin' then
-    return jsonb_build_object('ok', false, 'error', 'Cannot assign super_admin via this flow');
+  -- Guard: super_admin and lab_owner cannot be granted via this UI function.
+  -- These roles must be assigned directly in Supabase or via a privileged admin
+  -- migration. Allowing lab_owner assignment here would let any lab_owner
+  -- escalate arbitrary users to co-owner level.
+  if p_role in ('super_admin'::public.app_role, 'lab_owner'::public.app_role) then
+    return jsonb_build_object('ok', false, 'error', 'Cannot assign super_admin or lab_owner via this flow');
   end if;
 
   -- Guard: p_user_id must not be the calling user (can't link yourself)
@@ -89,12 +92,23 @@ begin
   end if;
 
   -- Upsert profile row (created by trigger on sign-up; may be missing
-  -- if user was created before this migration was applied)
+  -- if user was created before this migration was applied).
+  -- IMPORTANT: only overwrite lab_id/role if the profile currently has
+  -- no lab assignment (lab_id IS NULL). This prevents a lab_owner of Lab A
+  -- from silently overwriting the primary lab of a user who already belongs
+  -- to Lab B. If the profile already has a different lab_id, we only
+  -- activate the user_roles entry (handled below) and update the name.
   insert into public.profiles (id, lab_id, role, is_active, full_name)
   values (p_user_id, p_lab_id, p_role, true, p_full_name)
   on conflict (id) do update set
-    lab_id    = excluded.lab_id,
-    role      = excluded.role,
+    lab_id    = case
+                  when profiles.lab_id is null then excluded.lab_id
+                  else profiles.lab_id
+                end,
+    role      = case
+                  when profiles.lab_id is null then excluded.role
+                  else profiles.role
+                end,
     is_active = true,
     full_name = coalesce(excluded.full_name, profiles.full_name);
 
@@ -143,10 +157,9 @@ end;
 $$;
 
 -- ============================================================
--- 4. Grant execute on new functions to authenticated role
--- (migration 0012 set default privileges for future functions
---  but explicit grants are safer for security-definer functions)
+-- 4. Grant execute on RPC functions to authenticated role.
+-- handle_new_auth_user() is a trigger function — invoked by the DB
+-- engine, not by users — so it does not need an explicit EXECUTE grant.
 -- ============================================================
-grant execute on function public.handle_new_auth_user() to authenticated;
 grant execute on function public.admin_link_portal_account(uuid, uuid, public.app_role, text) to authenticated;
 grant execute on function public.admin_unlink_portal_account(uuid, uuid) to authenticated;
