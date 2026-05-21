@@ -31,7 +31,13 @@ export function AppShell({
       />
 
       <div className="lg:ps-64">
-        <Topbar title={title} eyebrow={eyebrow} session={session} />
+        <Topbar
+          title={title}
+          eyebrow={eyebrow}
+          labName={labName}
+          activeHref={activeHref}
+          session={session}
+        />
         <main className="px-4 py-6 md:px-8">{children}</main>
       </div>
     </div>

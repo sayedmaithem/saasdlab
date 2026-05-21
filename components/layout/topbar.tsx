@@ -9,6 +9,9 @@ import type { AppRole } from "@/lib/constants/roles";
 import type { AuthSessionContext } from "@/types/app";
 import { NotificationCenter } from "@/components/ui/notification-center";
 import { AiCommandPanel } from "@/components/ui/ai-command-panel";
+import { MobileNavButton } from "@/components/layout/mobile-nav";
+import { getNotificationsForCurrentUser } from "@/lib/data/notifications";
+import type { NotificationItem } from "@/lib/data/notifications";
 
 type BadgeTone = "default" | "blue" | "amber" | "green" | "red" | "neutral";
 
@@ -23,42 +26,61 @@ const roleBadgeTone: Record<AppRole, BadgeTone> = {
   delivery: "neutral",
 };
 
-export function Topbar({
+export async function Topbar({
   title = "LabFlow Dental CRM",
   eyebrow = "Production command center",
+  labName = "LabFlow",
+  activeHref = "/dashboard",
   session,
 }: {
   title?: string;
   eyebrow?: string;
+  labName?: string;
+  activeHref?: string;
   session: AuthSessionContext;
 }) {
   const canCreateCase = canManageCases(session.roles);
   const primaryRole = session.role;
 
+  // Load real notifications server-side — graceful fallback to []
+  let notifications: NotificationItem[] = [];
+  if (session.activeLabId) {
+    notifications = await getNotificationsForCurrentUser(session.activeLabId);
+  }
+
   return (
     <header className="sticky top-0 z-10 flex h-[60px] items-center justify-between border-b bg-card/90 px-4 backdrop-blur-md md:px-6">
-      <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70 leading-none">
-          {eyebrow}
-        </p>
-        <h1 className="mt-0.5 text-base font-bold leading-tight tracking-tight truncate">
-          {title}
-        </h1>
+      <div className="flex items-center gap-3 min-w-0">
+        {/* Mobile hamburger — hidden on lg+ */}
+        <MobileNavButton
+          roles={session.roles}
+          activeHref={activeHref}
+          labName={labName}
+        />
+
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70 leading-none">
+            {eyebrow}
+          </p>
+          <h1 className="mt-0.5 text-base font-bold leading-tight tracking-tight truncate">
+            {title}
+          </h1>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
         {/* AI Command Panel trigger */}
         <AiCommandPanel />
 
-        {/* Notification center */}
-        <NotificationCenter />
+        {/* Notification center — receives real server-fetched notifications */}
+        <NotificationCenter initialNotifications={notifications} />
 
         {/* New case */}
         {canCreateCase && (
           <Button asChild size="sm">
             <Link href="/cases/new">
               <PlusCircle className="size-3.5" aria-hidden="true" />
-              New case
+              <span className="hidden sm:inline">New case</span>
             </Link>
           </Button>
         )}

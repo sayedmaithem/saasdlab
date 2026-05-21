@@ -168,22 +168,62 @@ function SideCardHeader({
 
 // ── Workflow gate helpers ──────────────────────────────────────────────────────
 
+/**
+ * Compute case readiness from real CaseDetail fields.
+ *
+ * Weights:
+ *   Missing info (25 pts) — all required fields complete
+ *   Scan/source files (20 pts) — at least one file uploaded
+ *   Design (15 pts) — at least one design version uploaded
+ *   Doctor approval (15 pts) — approved or not required
+ *   Production stage (10 pts) — past design stage
+ *   QC (10 pts) — passed
+ *   Finance (5 pts) — price configured
+ *
+ * Total: 100 pts. Drives the ReadinessRing in the workflow gates card.
+ */
 function computeReadiness(item: CaseDetailData): number {
   let score = 0;
-  // Files (35 pts)
-  if (item.missingInfoFields.length === 0) score += 35;
-  else score += Math.max(0, 35 - item.missingInfoFields.length * 10);
-  // Design (25 pts)
-  if (item.designVersions.length > 0) score += 25;
-  // QC (20 pts)
-  if (item.latestQualityCheck?.result === "passed") score += 20;
-  // Doctor approval (20 pts) — only if required
-  if (item.requiresDoctorApproval) {
-    const approvedDesign = item.designVersions.find((d: { approvalStatus: string | null }) => d.approvalStatus === "approved");
-    if (approvedDesign) score += 20;
+
+  // Missing info complete (25 pts)
+  if (item.missingInfoFields.length === 0) {
+    score += 25;
   } else {
-    score += 20;
+    score += Math.max(0, 25 - item.missingInfoFields.length * 8);
   }
+
+  // Has uploaded files — scans, photos, or doctor uploads (20 pts)
+  const hasSourceFiles = item.files.some(
+    (f) => ["scan_files", "photos", "doctor_uploads", "exocad_design"].includes(f.category),
+  );
+  if (hasSourceFiles) score += 20;
+
+  // Has design version (15 pts)
+  if (item.designVersions.length > 0) score += 15;
+
+  // Doctor approval (15 pts)
+  if (item.requiresDoctorApproval) {
+    const approved = item.designVersions.some(
+      (d: { approvalStatus: string | null }) => d.approvalStatus === "approved",
+    );
+    if (approved) score += 15;
+  } else {
+    score += 15; // Not required = gate is satisfied
+  }
+
+  // Past design stage (10 pts) — stage order: cad_design < doctor_approval < milling_printing
+  const postDesignStages = [
+    "milling_printing", "try_in", "coloring", "furnace", "polishing",
+    "quality_control", "ready_for_delivery", "out_for_delivery", "delivered", "completed",
+  ];
+  if (postDesignStages.includes(item.currentStage)) score += 10;
+
+  // QC passed (10 pts)
+  if (item.latestQualityCheck?.result === "passed") score += 10;
+
+  // Finance configured (5 pts)
+  if (item.totalPrice > 0) score += 5;
+
   return Math.min(100, score);
 }
 

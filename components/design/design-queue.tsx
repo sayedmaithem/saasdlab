@@ -9,8 +9,11 @@ import {
   FileSearch,
   Layers,
   ThumbsUp,
+  FolderOpen,
+  ScanLine,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ReadinessRing } from "@/components/ui/readiness-ring";
 import type { DesignQueueItem, DesignQueueStage } from "@/lib/data/design";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -53,32 +56,71 @@ function dueRiskClass(dueDate: string | null): string {
   return "text-muted-foreground";
 }
 
+/**
+ * Compute a design-workflow-specific readiness score.
+ *
+ * Scans (35%) + Design versions (35%) + Approval status (30%)
+ *
+ * This is display-only — not persisted. Reflects what the CAD designer
+ * needs to move the case forward.
+ */
+function computeDesignReadiness(item: DesignQueueItem): number {
+  let score = 0;
+  if (item.hasSourceFiles) score += 35;
+  if (item.designVersionsCount > 0) score += 35;
+  if (item.latestDesignStatus === "approved") score += 30;
+  else if (item.latestDesignStatus === "pending_review") score += 15;
+  return score;
+}
+
+function nextBestAction(item: DesignQueueItem): string {
+  if (!item.hasSourceFiles) return "Chase scan files from reception or doctor";
+  if (item.designVersionsCount === 0) return "Upload first design version in exocad";
+  if (item.latestDesignStatus === "rejected") return "Review rejection notes and revise design";
+  if (item.latestDesignStatus === "needs_changes") return "Apply requested changes and re-upload";
+  if (item.latestDesignStatus === "pending_review") return "Waiting for doctor to review";
+  if (item.latestDesignStatus === "approved") return "Move case to production stage";
+  return "Upload design version";
+}
+
 // ── Case card ─────────────────────────────────────────────────────────────────
 
 function DesignCaseCard({ item }: { item: DesignQueueItem }) {
   const hasVersions = item.designVersionsCount > 0;
+  const readiness = computeDesignReadiness(item);
+  const action = nextBestAction(item);
+  const isUrgentOrMissingScan = item.isUrgent || !item.hasSourceFiles;
 
   return (
-    <article className="rounded-lg border bg-card p-4 space-y-3">
+    <article className={`relative overflow-hidden rounded-lg border bg-card p-4 space-y-3 ${isUrgentOrMissingScan ? "mission-card-urgent-line border-amber-200/60 dark:border-amber-800/40" : ""}`}>
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-start gap-4">
+        {/* Readiness ring */}
+        <div className="shrink-0 mt-0.5">
+          <ReadinessRing value={readiness} size={56} />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               href={`/cases/${item.id}`}
-              className="text-sm font-semibold hover:underline"
+              className="text-sm font-semibold hover:underline font-mono text-primary"
             >
               {item.caseNumber}
             </Link>
             {item.isUrgent && <Badge tone="red">Urgent</Badge>}
             {!item.hasSourceFiles && (
-              <Badge tone="amber">No scan files</Badge>
+              <Badge tone="amber">
+                <ScanLine className="size-3" />
+                No scans
+              </Badge>
             )}
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {item.patientName} · {item.doctorName}
             {item.clinicName ? ` · ${item.clinicName}` : ""}
           </p>
+          <p className="mt-1 text-xs font-medium">{item.workType}</p>
         </div>
 
         {item.dueDate && (
@@ -89,10 +131,8 @@ function DesignCaseCard({ item }: { item: DesignQueueItem }) {
         )}
       </div>
 
-      {/* Meta row */}
+      {/* Status badges */}
       <div className="flex flex-wrap items-center gap-2">
-        <Badge tone="neutral">{item.workType}</Badge>
-
         {hasVersions ? (
           <Badge tone={designStatusTone(item.latestDesignStatus)}>
             <Layers className="size-3" />
@@ -102,17 +142,34 @@ function DesignCaseCard({ item }: { item: DesignQueueItem }) {
               : ""}
           </Badge>
         ) : (
-          <Badge tone="neutral">No design uploaded yet</Badge>
+          <Badge tone="neutral">No design yet</Badge>
         )}
+
+        <Badge tone={item.hasSourceFiles ? "green" : "amber"}>
+          {item.hasSourceFiles ? "Scans ready" : "Missing scans"}
+        </Badge>
       </div>
 
-      {/* Action link */}
-      <div className="flex items-center gap-2 border-t pt-3">
+      {/* Next best action */}
+      <div className="rounded-md bg-muted/40 border px-3 py-2 text-xs">
+        <span className="text-muted-foreground font-medium">Next: </span>
+        <span>{action}</span>
+      </div>
+
+      {/* Action links */}
+      <div className="flex items-center gap-3 border-t pt-3">
         <Link
           href={`/cases/${item.id}`}
-          className="text-xs font-medium text-primary hover:underline"
+          className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
         >
-          Open case file →
+          <FolderOpen className="size-3" />
+          Open case
+        </Link>
+        <Link
+          href={`/cases/${item.id}#design-versions`}
+          className="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
+        >
+          Design versions →
         </Link>
       </div>
     </article>
@@ -175,6 +232,7 @@ export function DesignQueue({
   const filtered = items.filter((item) => item.currentStage === activeTab);
   const totalCases = items.length;
   const noScanFilesCount = items.filter((i) => !i.hasSourceFiles).length;
+  const awaitingApprovalCount = totalByStage["doctor_approval"] ?? 0;
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -187,7 +245,13 @@ export function DesignQueue({
         {noScanFilesCount > 0 && (
           <span className="flex items-center gap-1 text-sm text-amber-700 dark:text-amber-400">
             <AlertCircle className="size-3.5" />
-            <span className="font-semibold">{noScanFilesCount}</span> missing scan files
+            <span className="font-semibold">{noScanFilesCount}</span> missing scan files — blocking design start
+          </span>
+        )}
+        {awaitingApprovalCount > 0 && (
+          <span className="flex items-center gap-1 text-sm text-blue-700 dark:text-blue-400">
+            <Clock className="size-3.5" />
+            <span className="font-semibold">{awaitingApprovalCount}</span> waiting doctor approval
           </span>
         )}
       </div>

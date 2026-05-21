@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import {
   AlertCircle,
   Bell,
@@ -12,6 +12,11 @@ import {
   Truck,
   X,
 } from "lucide-react";
+import {
+  markNotificationReadAction,
+  markAllNotificationsReadAction,
+} from "@/app/actions/notifications";
+import type { NotificationItem } from "@/lib/data/notifications";
 
 // ── Filter config ─────────────────────────────────────────────────────────────
 
@@ -26,120 +31,19 @@ const FILTERS = [
 
 type FilterKey = (typeof FILTERS)[number]["key"];
 
-function filterMatches(notif: Notification, key: FilterKey): boolean {
+function filterMatches(notif: NotificationItem, key: FilterKey): boolean {
   if (key === "all") return true;
-  if (key === "unread") return !notif.read;
-  if (key === "approval") return notif.type === "doctor_approval" || notif.type === "design_approved" || notif.type === "design_rejected";
+  if (key === "unread") return !notif.isRead;
+  if (key === "approval") return ["doctor_approval", "design_approved", "design_rejected"].includes(notif.type);
   if (key === "files") return notif.type === "missing_file";
   if (key === "qc") return notif.type === "qc_required";
   if (key === "delivery") return notif.type === "delivery_ready";
   return true;
 }
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-type NotifType =
-  | "missing_file"
-  | "doctor_approval"
-  | "stage_overdue"
-  | "qc_required"
-  | "delivery_ready"
-  | "design_approved"
-  | "design_rejected"
-  | "case_blocked"
-  | "new_comment"
-  | "assignment";
-
-type Notification = {
-  id: string;
-  type: NotifType;
-  title: string;
-  body: string;
-  caseNumber?: string;
-  caseId?: string;
-  time: string;
-  read: boolean;
-};
-
-// ── Mock data — TODO: replace with real Supabase real-time subscription ───────
-// When backend is ready: subscribe to case_timeline / notifications table
-// using supabase.channel(...).on('postgres_changes',...) in a client provider
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "n1",
-    type: "stage_overdue",
-    title: "Case overdue",
-    body: "LAB-2041 passed due date. Currently at wax_modeling stage.",
-    caseNumber: "LAB-2041",
-    caseId: "",
-    time: "2 min ago",
-    read: false,
-  },
-  {
-    id: "n2",
-    type: "doctor_approval",
-    title: "Doctor approval needed",
-    body: "LAB-2038 design V2 is waiting for Dr. Hassan's approval.",
-    caseNumber: "LAB-2038",
-    caseId: "",
-    time: "14 min ago",
-    read: false,
-  },
-  {
-    id: "n3",
-    type: "missing_file",
-    title: "Missing scan files",
-    body: "LAB-2035 has no scan files uploaded. Technician is blocked.",
-    caseNumber: "LAB-2035",
-    caseId: "",
-    time: "1 hr ago",
-    read: false,
-  },
-  {
-    id: "n4",
-    type: "qc_required",
-    title: "Quality check required",
-    body: "LAB-2031 completed production and needs QC inspection.",
-    caseNumber: "LAB-2031",
-    caseId: "",
-    time: "2 hr ago",
-    read: true,
-  },
-  {
-    id: "n5",
-    type: "delivery_ready",
-    title: "Ready for delivery",
-    body: "LAB-2028 passed QC and is ready to dispatch to Dr. Khalil clinic.",
-    caseNumber: "LAB-2028",
-    caseId: "",
-    time: "3 hr ago",
-    read: true,
-  },
-  {
-    id: "n6",
-    type: "design_approved",
-    title: "Design approved",
-    body: "Dr. Ahmed approved the CAD design for LAB-2025. Ready for milling.",
-    caseNumber: "LAB-2025",
-    caseId: "",
-    time: "Yesterday",
-    read: true,
-  },
-  {
-    id: "n7",
-    type: "new_comment",
-    title: "New comment",
-    body: "Dr. Nour added a note on LAB-2022: 'Please adjust the occlusal contact.'",
-    caseNumber: "LAB-2022",
-    caseId: "",
-    time: "Yesterday",
-    read: true,
-  },
-];
-
 // ── Icon map ──────────────────────────────────────────────────────────────────
 
-const NOTIF_ICON: Record<NotifType, { icon: typeof Bell; color: string; bg: string }> = {
+const ICON_MAP: Record<string, { icon: typeof Bell; color: string; bg: string }> = {
   missing_file:    { icon: FileWarning,   color: "text-amber-600",  bg: "bg-amber-100 dark:bg-amber-900/30" },
   doctor_approval: { icon: Clock,         color: "text-blue-600",   bg: "bg-blue-100 dark:bg-blue-900/30" },
   stage_overdue:   { icon: AlertCircle,   color: "text-red-600",    bg: "bg-red-100 dark:bg-red-900/30" },
@@ -152,24 +56,59 @@ const NOTIF_ICON: Record<NotifType, { icon: typeof Bell; color: string; bg: stri
   assignment:      { icon: Truck,         color: "text-blue-600",   bg: "bg-blue-100 dark:bg-blue-900/30" },
 };
 
+const DEFAULT_ICON = { icon: Bell, color: "text-muted-foreground", bg: "bg-muted" };
+
+function getIconMeta(type: string) {
+  return ICON_MAP[type] ?? DEFAULT_ICON;
+}
+
+function formatRelativeTime(createdAt: string): string {
+  try {
+    const diff = Date.now() - new Date(createdAt).getTime();
+    const minutes = Math.floor(diff / 60_000);
+    if (minutes < 1) return "just now";
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return "Yesterday";
+    return `${days}d ago`;
+  } catch {
+    return "";
+  }
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function NotificationCenter() {
+export function NotificationCenter({
+  initialNotifications = [],
+}: {
+  /** Server-fetched notifications passed as initial state. Falls back to [] when no DB. */
+  initialNotifications?: NotificationItem[];
+}) {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
+  const [isPending, startTransition] = useTransition();
 
-  const unread = notifications.filter((n) => !n.read).length;
+  const isRealData = initialNotifications.length > 0;
+  const unread = notifications.filter((n) => !n.isRead).length;
   const filtered = notifications.filter((n) => filterMatches(n, activeFilter));
 
-  function markAllRead() {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  function optimisticMarkRead(id: string) {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+    );
+    startTransition(async () => {
+      await markNotificationReadAction(id);
+    });
   }
 
-  function markRead(id: string) {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    );
+  function optimisticMarkAllRead() {
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    startTransition(async () => {
+      await markAllNotificationsReadAction();
+    });
   }
 
   return (
@@ -192,31 +131,28 @@ export function NotificationCenter() {
       {/* Panel */}
       {open && (
         <>
-          {/* Backdrop */}
           <div
             className="notification-backdrop"
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
 
-          {/* Panel */}
           <div className="notification-panel" role="dialog" aria-label="Notifications">
             {/* Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-card px-4 py-3">
               <div>
                 <h2 className="text-sm font-bold">Notifications</h2>
                 {unread > 0 && (
-                  <p className="text-[11px] text-muted-foreground">
-                    {unread} unread
-                  </p>
+                  <p className="text-[11px] text-muted-foreground">{unread} unread</p>
                 )}
               </div>
               <div className="flex items-center gap-2">
                 {unread > 0 && (
                   <button
                     type="button"
-                    onClick={markAllRead}
-                    className="text-[11px] text-primary font-medium hover:underline"
+                    onClick={optimisticMarkAllRead}
+                    disabled={isPending}
+                    className="text-[11px] text-primary font-medium hover:underline disabled:opacity-50"
                   >
                     Mark all read
                   </button>
@@ -232,15 +168,17 @@ export function NotificationCenter() {
               </div>
             </div>
 
-            {/* Mock data banner */}
-            <div className="mx-4 mt-3 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 px-3 py-2">
-              <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400">
-                ⚠ Mock notifications — TODO: wire to Supabase real-time
-              </p>
-              <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-0.5">
-                Backend needed: notifications table + real-time channel subscription
-              </p>
-            </div>
+            {/* Data source banner */}
+            {!isRealData && (
+              <div className="mx-4 mt-3 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 px-3 py-2">
+                <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400">
+                  ⚠ No notifications yet
+                </p>
+                <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-0.5">
+                  Notifications will appear here when events occur in the lab. Database table is ready (migration 0020 applied).
+                </p>
+              </div>
+            )}
 
             {/* Filter pill tabs */}
             <div className="flex flex-wrap gap-1.5 px-4 mt-3">
@@ -263,16 +201,22 @@ export function NotificationCenter() {
             {/* Notification list */}
             <div className="divide-y divide-border mt-3">
               {filtered.map((notif) => {
-                const meta = NOTIF_ICON[notif.type];
+                const meta = getIconMeta(notif.type);
                 const Icon = meta.icon;
 
                 return (
                   <button
                     key={notif.id}
                     type="button"
-                    onClick={() => markRead(notif.id)}
+                    onClick={() => {
+                      if (!notif.isRead) optimisticMarkRead(notif.id);
+                      if (notif.actionUrl) {
+                        setOpen(false);
+                        window.location.href = notif.actionUrl;
+                      }
+                    }}
                     className={`w-full text-left px-4 py-3.5 hover:bg-muted/50 transition-colors ${
-                      notif.read ? "opacity-60" : ""
+                      notif.isRead ? "opacity-60" : ""
                     }`}
                   >
                     <div className="flex gap-3">
@@ -283,29 +227,30 @@ export function NotificationCenter() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className={`text-[13px] font-semibold leading-snug ${notif.read ? "" : "text-foreground"}`}>
+                          <p className={`text-[13px] font-semibold leading-snug ${notif.isRead ? "" : "text-foreground"}`}>
                             {notif.title}
                           </p>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {!notif.read && (
-                              <span className="size-1.5 rounded-full bg-primary flex-shrink-0 mt-1" />
-                            )}
-                          </div>
+                          {!notif.isRead && (
+                            <span className="size-1.5 rounded-full bg-primary flex-shrink-0 mt-1" />
+                          )}
                         </div>
-                        <p className="text-[12px] text-muted-foreground mt-0.5 leading-snug">
-                          {notif.body}
-                        </p>
+                        {notif.body && (
+                          <p className="text-[12px] text-muted-foreground mt-0.5 leading-snug">
+                            {notif.body}
+                          </p>
+                        )}
                         <p className="text-[10px] text-muted-foreground/70 mt-1.5 font-medium">
-                          {notif.time}
+                          {formatRelativeTime(notif.createdAt)}
                         </p>
                       </div>
                     </div>
                   </button>
                 );
               })}
+
               {filtered.length === 0 && (
                 <div className="py-10 text-center text-sm text-muted-foreground">
-                  Nothing here.
+                  {activeFilter === "unread" ? "No unread notifications." : "Nothing here."}
                 </div>
               )}
             </div>
