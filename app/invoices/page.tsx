@@ -10,7 +10,7 @@ export default async function InvoicesPage() {
   const data = await getFinanceDashboard(session);
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/invoices">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/invoices">
       <InvoicesDashboard
         invoices={data.invoices}
         doctors={data.doctors}

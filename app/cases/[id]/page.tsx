@@ -17,7 +17,14 @@ export default async function CaseDetailPage({
   const item = await getCaseDetail(session, id, canViewFinance);
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/cases">
+    <AppShell
+      labName={session.labName ?? "LabFlow"}
+      session={session}
+      activeHref="/cases"
+      eyebrow="Cases"
+      title={`${item.caseNumber} — ${item.patientName}`}
+      cloudStatus="connected"
+    >
       <CaseDetail item={item} canViewFinance={canViewFinance} />
     </AppShell>
   );

@@ -77,7 +77,9 @@ function assertLab(session: AuthSessionContext) {
 }
 
 function canUseFinance(session: AuthSessionContext) {
-  return hasRole(session.roles, ["super_admin", "lab_owner", "accountant", "doctor"]);
+  // Doctor is intentionally excluded: they must use getDoctorStatementData()
+  // which scopes queries to their own records only (fixing C4).
+  return hasRole(session.roles, ["super_admin", "lab_owner", "accountant"]);
 }
 
 export async function getFinanceDashboard(session: AuthSessionContext) {
@@ -305,6 +307,101 @@ export async function getDoctorStatement(
 
   return {
     doctorName: doctor?.display_name ?? "Doctor",
+    rows,
+    remainingBalance: balance,
+    formattedBalance: formatMoney(balance),
+  };
+}
+
+/**
+ * Doctor-portal-specific statement loader (C4 fix).
+ *
+ * Resolves the doctor record from session.userId — the caller cannot supply an
+ * arbitrary doctorId, which prevents cross-doctor data leakage.
+ * All queries are explicitly scoped by lab_id AND doctor.id.
+ * Never returns aggregate data or other doctors' invoices.
+ */
+export async function getDoctorStatementData(
+  session: AuthSessionContext,
+  filters: { from?: string; to?: string } = {},
+): Promise<{
+  doctorName: string;
+  doctorId: string | null;
+  rows: DoctorStatementRow[];
+  remainingBalance: number;
+  formattedBalance: string;
+}> {
+  const labId = assertLab(session);
+  if (!hasSupabaseEnv()) {
+    return { doctorName: "Doctor", doctorId: null, rows: [], remainingBalance: 0, formattedBalance: formatMoney(0) };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  // Resolve doctor strictly from session — cannot be spoofed by URL params
+  const { data: doctor, error: doctorError } = await supabase
+    .from("doctors")
+    .select("id, display_name")
+    .eq("lab_id", labId)
+    .eq("profile_id", session.userId)
+    .maybeSingle<{ id: string; display_name: string }>();
+
+  if (doctorError) throw new Error(doctorError.message);
+  if (!doctor) {
+    return { doctorName: "Doctor", doctorId: null, rows: [], remainingBalance: 0, formattedBalance: formatMoney(0) };
+  }
+
+  const [{ data: invoices }, { data: payments }] = await Promise.all([
+    supabase
+      .from("invoices")
+      .select("invoice_number, issue_date, total, notes")
+      .eq("lab_id", labId)
+      .eq("doctor_id", doctor.id)
+      .order("issue_date")
+      .returns<Array<{ invoice_number: string; issue_date: string | null; total: number; notes: string | null }>>(),
+    supabase
+      .from("payments")
+      .select("id, amount, paid_at, notes")
+      .eq("lab_id", labId)
+      .eq("doctor_id", doctor.id)
+      .order("paid_at")
+      .returns<Array<{ id: string; amount: number; paid_at: string; notes: string | null }>>(),
+  ]);
+
+  const events = [
+    ...(invoices ?? []).map((item) => ({
+      date: item.issue_date ?? "",
+      type: "invoice" as const,
+      reference: item.invoice_number,
+      debit: Number(item.total ?? 0),
+      credit: 0,
+      notes: item.notes,
+    })),
+    ...(payments ?? []).map((item) => ({
+      date: item.paid_at,
+      type: "payment" as const,
+      reference: item.id.slice(0, 8),
+      debit: 0,
+      credit: Number(item.amount ?? 0),
+      notes: item.notes,
+    })),
+  ]
+    .filter(
+      (item) =>
+        (!filters.from || item.date >= filters.from) &&
+        (!filters.to || item.date <= `${filters.to}T23:59:59`),
+    )
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  let balance = 0;
+  const rows = events.map((event) => {
+    balance += event.debit - event.credit;
+    return { ...event, balance };
+  });
+
+  return {
+    doctorName: doctor.display_name,
+    doctorId: doctor.id,
     rows,
     remainingBalance: balance,
     formattedBalance: formatMoney(balance),

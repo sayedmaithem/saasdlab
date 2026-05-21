@@ -11,6 +11,11 @@ import {
   kanbanStages,
   transitionTitle,
 } from "@/lib/production/stage-rules";
+import {
+  checkWorkflowTransition,
+  checkTechnicianStagePermission,
+  checkStageRequirements,
+} from "@/lib/data/workflows";
 
 export type ProductionActionState = {
   ok: boolean;
@@ -216,13 +221,46 @@ export async function moveCaseStageAction(
       dueDate: item.due_date,
     });
 
-	    if (transitionError) return { ok: false, message: transitionError };
+    if (transitionError) return { ok: false, message: transitionError };
 
-	    if (
-	      parsed.data.targetStage === "milling_printing" &&
-	      item.requires_doctor_approval &&
-	      !(await hasApprovedDesign(item.id, item.lab_id))
-	    ) {
+    // Workflow engine validation — additive gate on top of hardcoded rules.
+    // Returns null in fallback mode (no transitions configured) or if permitted.
+    const workflowError = await checkWorkflowTransition({
+      labId: session.activeLabId,
+      fromStage: currentStage,
+      toStage: parsed.data.targetStage,
+      roles: session.roles,
+      hasNote: Boolean(parsed.data.delayReason?.trim()),
+    });
+    if (workflowError) return { ok: false, message: workflowError };
+
+    // Technician stage permissions — additive gate.
+    // Only enforced when the lab has technician_stage_permissions configured.
+    // Managers bypass this check (only technician role is restricted).
+    if (session.roles.includes("technician")) {
+      const techPermError = await checkTechnicianStagePermission({
+        labId: session.activeLabId,
+        technicianProfileId: session.userId,
+        toStageKey: parsed.data.targetStage,
+        action: "can_move_to",
+      });
+      if (techPermError) return { ok: false, message: techPermError };
+    }
+
+    // Stage requirements — additive gate.
+    // Only enforced when the lab has stage_requirements configured for the target stage.
+    const requirementsError = await checkStageRequirements({
+      labId: session.activeLabId,
+      caseId: item.id,
+      toStageKey: parsed.data.targetStage,
+    });
+    if (requirementsError) return { ok: false, message: requirementsError };
+
+    if (
+      parsed.data.targetStage === "milling_printing" &&
+      item.requires_doctor_approval &&
+      !(await hasApprovedDesign(item.id, item.lab_id))
+    ) {
 	      return {
 	        ok: false,
 	        message: "Doctor approval is required before milling or printing.",
@@ -424,6 +462,18 @@ export async function startStageAction(
 
     if (item.assigned_technician_id !== session.userId) {
       return { ok: false, message: "Only the assigned technician can start this stage." };
+    }
+
+    // can_work gate — additive, returns null in fallback mode (no perms configured).
+    // Only checked for technician role; managers bypass this gate.
+    if (session.roles.includes("technician")) {
+      const techPermError = await checkTechnicianStagePermission({
+        labId: session.activeLabId,
+        technicianProfileId: session.userId,
+        toStageKey: currentStage,
+        action: "can_work",
+      });
+      if (techPermError) return { ok: false, message: techPermError };
     }
 
     if (currentStage === "waiting_doctor_info") {

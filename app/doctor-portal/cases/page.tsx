@@ -20,7 +20,7 @@ export default async function DoctorPortalCasesPage({
   });
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/doctor-portal">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/doctor-portal">
       <DoctorPortalDashboard data={data} />
     </AppShell>
   );

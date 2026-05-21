@@ -19,7 +19,7 @@ export default async function InvoiceDetailPage({
   if (!invoice) notFound();
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/invoices">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/invoices">
       <div className="space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>

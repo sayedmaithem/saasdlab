@@ -28,12 +28,21 @@ export async function getCurrentSessionContext(): Promise<AuthSessionContext | n
       phone: null,
       role: "lab_owner",
       activeLabId: "00000000-0000-4000-8000-000000000001",
+      labName: "Preview Lab",
       roles: ["lab_owner"],
     };
   }
 
   if (!hasSupabaseEnv()) {
-    return null;
+    // Supabase env is missing and preview auth is not explicitly enabled.
+    // This is a misconfiguration — fail loudly rather than returning a null
+    // session that could propagate in unexpected ways.
+    throw new Error(
+      "LabFlow configuration error: NEXT_PUBLIC_SUPABASE_URL and " +
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY are not set. " +
+        "For local development without Supabase, add LABFLOW_DEV_PREVIEW=1 " +
+        "to your .env.local file. Never enable this in staging or production.",
+    );
   }
 
   const supabase = await createSupabaseServerClient();
@@ -75,13 +84,26 @@ export async function getCurrentSessionContext(): Promise<AuthSessionContext | n
     new Set([profile.role, ...(extraRoles?.map((item) => item.role) ?? [])]),
   );
 
+  const activeLabId = profile.lab_id ?? extraRoles?.[0]?.lab_id ?? null;
+
+  let labName: string | null = null;
+  if (activeLabId) {
+    const { data: labRow } = await supabase
+      .from("labs")
+      .select("name")
+      .eq("id", activeLabId)
+      .maybeSingle<{ name: string }>();
+    labName = labRow?.name ?? null;
+  }
+
   return {
     userId: user.id,
     email: profile.email ?? user.email ?? null,
     fullName: profile.full_name,
     phone: profile.phone,
     role: profile.role,
-    activeLabId: profile.lab_id ?? extraRoles?.[0]?.lab_id ?? null,
+    activeLabId,
+    labName,
     roles,
   };
 }

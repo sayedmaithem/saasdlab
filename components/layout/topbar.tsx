@@ -1,9 +1,25 @@
 import Link from "next/link";
 import { LogOut, PlusCircle, UserCircle } from "lucide-react";
 import { logoutAction } from "@/app/auth/actions";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { roleLabels } from "@/lib/constants/roles";
 import { canManageCases } from "@/lib/permissions";
+import type { AppRole } from "@/lib/constants/roles";
 import type { AuthSessionContext } from "@/types/app";
+
+type BadgeTone = "default" | "blue" | "amber" | "green" | "red" | "neutral";
+
+const roleBadgeTone: Record<AppRole, BadgeTone> = {
+  super_admin: "red",
+  lab_owner: "green",
+  lab_manager: "blue",
+  reception: "neutral",
+  technician: "blue",
+  accountant: "amber",
+  doctor: "default",
+  delivery: "neutral",
+};
 
 export function Topbar({
   title = "LabFlow Dental CRM",
@@ -15,6 +31,7 @@ export function Topbar({
   session: AuthSessionContext;
 }) {
   const canCreateCase = canManageCases(session.roles);
+  const primaryRole = session.role;
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-card/90 px-4 backdrop-blur md:px-8">
@@ -47,9 +64,11 @@ export function Topbar({
             <p className="mt-1 truncate text-xs text-muted-foreground">
               {session.email ?? "No email"}
             </p>
-            <p className="mt-2 rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
-              {session.role.replaceAll("_", " ")}
-            </p>
+            <div className="mt-2">
+              <Badge tone={roleBadgeTone[primaryRole]}>
+                {roleLabels[primaryRole] ?? primaryRole.replaceAll("_", " ")}
+              </Badge>
+            </div>
             <form action={logoutAction} className="mt-3">
               <Button type="submit" variant="outline" size="sm" className="w-full">
                 <LogOut aria-hidden="true" />

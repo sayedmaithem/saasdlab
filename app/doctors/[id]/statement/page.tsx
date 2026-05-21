@@ -18,7 +18,7 @@ export default async function DoctorStatementPage({
   const statement = await getDoctorStatement(session, id, filters);
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/doctors">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/doctors">
       <DoctorStatement
         doctorName={statement.doctorName}
         rows={statement.rows}

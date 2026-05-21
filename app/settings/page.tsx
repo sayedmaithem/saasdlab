@@ -10,7 +10,7 @@ export default async function SettingsPage() {
   const data = await getSettingsData(session);
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/settings">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/settings">
       <SettingsDashboard data={data} />
     </AppShell>
   );

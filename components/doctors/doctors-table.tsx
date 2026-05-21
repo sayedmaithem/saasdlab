@@ -77,6 +77,7 @@ export function DoctorsTable({
                 <th className="p-4">Missing info</th>
                 <th className="p-4">Remakes</th>
                 <th className="p-4">Payment</th>
+                <th className="p-4"></th>
               </tr>
             </thead>
             <tbody>
@@ -106,6 +107,14 @@ export function DoctorsTable({
                     <Badge tone={paymentTone[doctor.paymentStatus]}>
                       {doctor.paymentStatus}
                     </Badge>
+                  </td>
+                  <td className="p-4">
+                    <Link
+                      href={`/doctors/${doctor.id}/edit`}
+                      className="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
+                    >
+                      Edit
+                    </Link>
                   </td>
                 </tr>
               ))}

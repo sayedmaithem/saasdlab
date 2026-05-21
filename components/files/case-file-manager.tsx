@@ -424,7 +424,7 @@ export function CaseFileManager({
           ))
         ) : (
           <div className="rounded-lg border bg-background p-4 text-sm text-muted-foreground">
-            No files are available for your role yet.
+            No files uploaded yet. Upload scans, photos, and case documents to get started.
           </div>
         )}
       </div>

@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { hasSupabaseEnv } from "@/lib/env";
 import {
   getDelayRisk,
   kanbanStages,
@@ -191,6 +192,7 @@ export async function getProductionBoardData(
   session: AuthSessionContext,
 ): Promise<ProductionBoardData> {
   const labId = assertLab(session);
+  if (!hasSupabaseEnv()) return { columns: [], technicians: [] };
   const supabase = await createSupabaseServerClient();
   const technicians = await getTechnicians(labId);
   const technicianNames = new Map(
@@ -254,6 +256,24 @@ export async function getTechnicianWorkspaceData(
   session: AuthSessionContext,
 ): Promise<TechnicianWorkspaceData> {
   const labId = assertLab(session);
+  if (!hasSupabaseEnv()) {
+    return {
+      technician: null,
+      assignedCases: [],
+      dueToday: 0,
+      overdue: 0,
+      needsDesignUpload: 0,
+      needsQcCorrection: 0,
+      productivity: {
+        assignedCases: 0,
+        completedCases: 0,
+        unitsCompleted: 0,
+        averageStageTimeHours: 0,
+        delayPercentage: 0,
+        qcPassRate: null,
+      },
+    };
+  }
   const supabase = await createSupabaseServerClient();
   const technicians = await getTechnicians(labId);
   const technician =
@@ -282,6 +302,8 @@ export async function getTechnicianWorkspaceData(
       .from("quality_checks")
       .select("case_id, result")
       .eq("lab_id", labId)
+      .order("created_at", { ascending: false })
+      .limit(500) // Performance: cap QC rows for workspace
       .returns<QcRow[]>(),
     supabase
       .from("case_stage_logs")
@@ -289,6 +311,8 @@ export async function getTechnicianWorkspaceData(
       .eq("lab_id", labId)
       .not("started_at", "is", null)
       .not("completed_at", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(500) // Performance: cap stage logs for productivity calc
       .returns<StageLogRow[]>(),
     supabase
       .from("cases")

@@ -37,9 +37,14 @@ export function DoctorProfile({ doctor }: { doctor: DoctorProfileData }) {
             </Badge>
           </div>
         </div>
-        <Button asChild>
-          <Link href={`/doctors/${doctor.id}/prices`}>Price list</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href={`/doctors/${doctor.id}/edit`}>Edit</Link>
+          </Button>
+          <Button asChild>
+            <Link href={`/doctors/${doctor.id}/prices`}>Price list</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[360px_1fr]">

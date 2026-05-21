@@ -1,25 +1,42 @@
 export const dynamic = "force-dynamic";
 
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { ModuleScaffold } from "@/components/layout/module-scaffold";
+import { TechnicianList } from "@/components/technicians/technician-list";
 import { requireRouteAccess } from "@/lib/auth/guards";
-import { foundationRoutes } from "@/lib/constants/modules";
+import { hasRole } from "@/lib/permissions";
+import { getTechnicians } from "@/lib/data/technicians";
 
 export default async function TechniciansPage() {
   const session = await requireRouteAccess("/technicians");
 
+  // Technician role users must not see the management list.
+  // They are redirected to their own first-class workspace.
+  // Only managers (owner, manager, super_admin) access this page.
+  const canManage = hasRole(session.roles, ["super_admin", "lab_owner", "lab_manager"]);
+  if (!canManage) {
+    redirect("/technicians/workspace");
+  }
+
+  const technicians = await getTechnicians(session);
+
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/technicians">
-      <div className="space-y-5">
-        <ModuleScaffold route={foundationRoutes.technicians} />
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/technicians">
+      <div className="mb-5 flex items-center justify-between gap-4">
         <div>
-          <a
-            href="/technicians/workspace"
-            className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-          >
-            Open technician workspace
-          </a>
+          <p className="text-sm font-medium text-muted-foreground">Lab team</p>
+          <h2 className="text-2xl font-semibold">Technicians</h2>
         </div>
+        <Link
+          href="/technicians/workspace"
+          className="text-sm font-medium text-muted-foreground hover:text-foreground"
+        >
+          Technician workspace →
+        </Link>
+      </div>
+      <div className="max-w-3xl">
+        <TechnicianList technicians={technicians} canManage={canManage} />
       </div>
     </AppShell>
   );

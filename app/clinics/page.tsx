@@ -17,7 +17,7 @@ export default async function ClinicsPage() {
   ]);
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/clinics">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/clinics">
       <div className="mb-5">
         <p className="text-sm font-medium text-muted-foreground">
           Relationship management

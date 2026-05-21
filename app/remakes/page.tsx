@@ -21,7 +21,7 @@ export default async function RemakesPage({
   const data = await getRemakesData(session, filters);
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/remakes">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/remakes">
       <RemakesDashboard
         remakes={data.remakes}
         doctors={data.doctors}

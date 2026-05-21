@@ -40,6 +40,7 @@ export type AuthSessionContext = {
   phone: string | null;
   role: AppRole;
   activeLabId: string | null;
+  labName: string | null;
   roles: AppRole[];
 };
 

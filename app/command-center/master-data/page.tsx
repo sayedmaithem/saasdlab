@@ -14,6 +14,7 @@ import {
   Users,
   ArrowRight,
   AlertCircle,
+  Workflow,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { requireRouteAccess } from "@/lib/auth/guards";
@@ -34,6 +35,7 @@ type MasterDataCard = {
   status: CardStatus;
   count?: number;
   note?: string;
+  setupStep?: number; // 1-based setup order for first-time setup
 };
 
 const STATUS_BADGE: Record<CardStatus, { label: string; tone: "green" | "amber" | "blue" }> = {
@@ -52,93 +54,122 @@ export default async function MasterDataPage() {
   const overview = await getMasterDataOverview(session);
 
   const CARDS: MasterDataCard[] = [
+    // ── People (configure first) ──────────────────────────────
     {
       title: "Clinics",
       description:
-        "Manage clinic profiles, addresses, contact details, and doctor assignments. Every case must be linked to a clinic.",
+        "Clinic profiles, addresses, contact details, and doctor assignments. Every case must be linked to a clinic.",
       href: "/clinics",
       icon: Building2,
       status: "ready",
       cta: "Manage clinics",
+      setupStep: 1,
     },
     {
       title: "Doctors",
       description:
-        "Create, edit, and configure doctor profiles. Assign doctors to clinics, set payment terms, and manage VIP status.",
+        "Doctor profiles, clinic assignments, payment terms, and VIP status. Doctors are referenced on every case.",
       href: "/doctors",
       icon: UserRound,
       status: "ready",
       cta: "Manage doctors",
+      setupStep: 2,
     },
     {
       title: "Technicians",
       description:
-        "Add lab technicians, register skills, view workloads, and configure workspace access.",
+        "Lab technicians, skills, workloads, and workspace access. Technicians are assigned to production stages.",
       href: "/technicians",
       icon: Wrench,
       status: "ready",
       cta: "Manage technicians",
+      setupStep: 3,
     },
+    // ── Catalog (configure before pricing) ───────────────────
     {
-      title: "Work Types / Operations",
+      title: "Work Types",
       description:
-        "Define the restoration types your lab performs: crowns, bridges, implants, aligners, night guards, etc. Each lab configures its own list.",
+        "Restoration types your lab performs: crowns, bridges, implants, aligners, night guards. Drives case creation and QC checklists.",
       href: "/command-center/master-data/operations",
       icon: FlaskConical,
       status: statusFromCount(overview.operationsCount),
-      cta: overview.operationsCount > 0 ? "Manage operations" : "Configure operations",
+      cta: overview.operationsCount > 0 ? "Manage work types" : "Configure work types",
       count: overview.operationsCount,
+      setupStep: 4,
     },
     {
       title: "Materials",
       description:
-        "Maintain a materials catalogue: zirconia, e.max, PMMA, titanium, etc. Materials drive pricing and production routing.",
+        "Materials catalogue: zirconia, e.max, PMMA, titanium. Materials are selected per case and used in pricing.",
       href: "/command-center/master-data/materials",
       icon: FlaskConical,
       status: statusFromCount(overview.materialsCount),
       cta: overview.materialsCount > 0 ? "Manage materials" : "Configure materials",
       count: overview.materialsCount,
+      setupStep: 5,
     },
+    // ── Pricing (configure after catalog) ────────────────────
     {
       title: "Price Groups",
       description:
-        "Create named price tiers for different doctor relationships: Standard, VIP, Implant Specialist, Wholesale. Each doctor can be assigned a default group.",
+        "Named price tiers: Standard, VIP, Implant Specialist, Wholesale. Each doctor is assigned a default group.",
       href: "/command-center/master-data/price-groups",
       icon: Tags,
       status: statusFromCount(overview.priceGroupsCount),
       cta: overview.priceGroupsCount > 0 ? "Manage groups" : "Create price groups",
       count: overview.priceGroupsCount,
+      setupStep: 6,
     },
     {
       title: "Operation Prices",
       description:
-        "Set unit prices per work type, material, and effective date for each price group. Prices auto-apply when creating cases.",
+        "Unit prices per work type, material, and price group. Prices auto-apply when creating cases.",
       href: "/command-center/master-data/prices",
       icon: DollarSign,
       status: statusFromCount(overview.operationPricesCount),
       cta: overview.operationPricesCount > 0 ? "View prices" : "Configure prices",
       count: overview.operationPricesCount,
+      setupStep: 7,
       note:
         overview.priceGroupsCount === 0
           ? "Create price groups before adding prices."
           : overview.operationsCount === 0
-          ? "Configure operations before adding prices."
+          ? "Configure work types before adding prices."
           : undefined,
     },
     {
       title: "Technician Rates",
       description:
-        "Configure per-operation rates for internal cost tracking. Rate per unit, fixed, or hourly. Feeds into lab margin reporting.",
+        "Per-operation cost rates for internal tracking. Feeds into lab margin and profit reporting.",
       href: "/command-center/master-data/technician-rates",
       icon: Hammer,
       status: statusFromCount(overview.technicianRatesCount),
       cta: overview.technicianRatesCount > 0 ? "Manage rates" : "Configure rates",
       count: overview.technicianRatesCount,
     },
+    // ── Workflow and access ───────────────────────────────────
+    {
+      title: "Workflow Engine",
+      description:
+        "Custom production stage sequences. Override the default 18-stage workflow with relabeled, reordered stages and entry requirements.",
+      href: "/command-center/master-data/workflows",
+      icon: Workflow,
+      status: "ready",
+      cta: "Configure workflows",
+    },
+    {
+      title: "Stage Permissions",
+      description:
+        "Per-technician stage access control. Enforce which stages each technician can work on and move cases between.",
+      href: "/command-center/master-data/technician-stage-permissions",
+      icon: ShieldCheck,
+      status: "ready",
+      cta: "Configure permissions",
+    },
     {
       title: "Portal Users",
       description:
-        "Create portal accounts for technicians, doctors, accountants, and delivery staff. No Supabase dashboard access required — manage identity directly from the app.",
+        "Portal accounts for technicians, doctors, accountants, and delivery staff. Manage identity directly from the app.",
       href: "/command-center/users",
       icon: Users,
       status: "ready",
@@ -147,7 +178,7 @@ export default async function MasterDataPage() {
     {
       title: "Roles & Permissions",
       description:
-        "Review the 8-role permission matrix. Understand which roles can access what. Configure initial access before inviting team members.",
+        "8-role permission matrix. Understand which roles can access what. Review before inviting team members.",
       href: "/command-center/roles",
       icon: ShieldCheck,
       status: "ready",
@@ -156,21 +187,12 @@ export default async function MasterDataPage() {
     {
       title: "Portal Access",
       description:
-        "Control which portals are active: Doctor Portal, Technician Workspace, Finance view, Delivery view. Manage access templates.",
+        "Control which portals are active: Doctor Portal, Technician Workspace, Finance view, Delivery view.",
       href: "/command-center/master-data/portal-access",
       icon: Globe,
       status: statusFromCount(overview.portalTemplatesCount),
       cta: overview.portalTemplatesCount > 0 ? "Manage templates" : "Configure portal access",
       count: overview.portalTemplatesCount,
-    },
-    {
-      title: "Workflow Engine",
-      description:
-        "Define custom production stage sequences for this lab. Override the default 18-stage fixed enum with relabeled, reordered stages that match your actual workflow.",
-      href: "/command-center/master-data/workflows",
-      icon: FlaskConical,
-      status: "ready",
-      cta: "Configure workflows",
     },
   ];
 
@@ -191,16 +213,18 @@ export default async function MasterDataPage() {
 
         <div className="space-y-2">
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-            Every lab is independent. Configure your own clinics, doctors, operations, materials,
-            price groups, and access policies before going live. Nothing is shared between labs.
+            Configure your lab before going live. Each section is isolated to your lab — nothing is shared.
+            Items marked <span className="font-semibold text-amber-600">Needs setup</span> must be completed before cases can be created and priced.
           </p>
-          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            <span>
-              <span className="font-semibold text-green-600">{readyCount}</span> sections ready
+          <div className="flex flex-wrap gap-4 text-sm">
+            <span className="text-muted-foreground">
+              <span className="font-semibold text-emerald-600">{readyCount}</span> sections ready
             </span>
-            <span>
-              <span className="font-semibold text-amber-500">{needsSetupCount}</span> need setup
-            </span>
+            {needsSetupCount > 0 && (
+              <span className="text-muted-foreground">
+                <span className="font-semibold text-amber-600">{needsSetupCount}</span> need setup
+              </span>
+            )}
           </div>
         </div>
 
@@ -213,15 +237,20 @@ export default async function MasterDataPage() {
               <Card key={card.title} className="flex flex-col">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="flex size-8 items-center justify-center rounded-md bg-muted">
+                    <div className="flex items-center gap-2.5">
+                      <div className="relative flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
                         <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
+                        {card.setupStep !== undefined && card.status === "needs_setup" && (
+                          <span className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white">
+                            {card.setupStep}
+                          </span>
+                        )}
                       </div>
-                      <CardTitle className="text-base">{card.title}</CardTitle>
+                      <CardTitle className="text-sm font-semibold">{card.title}</CardTitle>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      {card.count !== undefined ? (
-                        <span className="text-xs font-medium text-muted-foreground">
+                      {card.count !== undefined && card.count > 0 ? (
+                        <span className="text-xs font-medium tabular-nums text-muted-foreground">
                           {card.count}
                         </span>
                       ) : null}

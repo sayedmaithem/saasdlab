@@ -10,7 +10,7 @@ export default async function PaymentsPage() {
   const data = await getFinanceDashboard(session);
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/payments">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/payments">
       <PaymentsDashboard doctors={data.doctors} summary={data.summary} />
     </AppShell>
   );

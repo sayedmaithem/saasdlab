@@ -29,6 +29,10 @@ export const routeAccessRules: RouteAccessRule[] = [
     roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
   },
   {
+    path: "/design",
+    roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
+  },
+  {
     path: "/quality-control",
     roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
   },
@@ -41,8 +45,14 @@ export const routeAccessRules: RouteAccessRule[] = [
     roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
   },
   {
+    // Explicit rule so workspace is clearly accessible to technician role
+    // even if the parent /technicians page redirects them away.
+    path: "/technicians/workspace",
+    roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
+  },
+  {
     path: "/invoices",
-    roles: ["super_admin", "lab_owner", "accountant", "doctor"],
+    roles: ["super_admin", "lab_owner", "accountant"],
   },
   {
     path: "/payments",
@@ -63,6 +73,22 @@ export const routeAccessRules: RouteAccessRule[] = [
   {
     path: "/doctor-portal",
     roles: ["super_admin", "lab_owner", "doctor"],
+  },
+  {
+    path: "/command-center",
+    roles: ["super_admin", "lab_owner", "lab_manager"],
+  },
+  {
+    path: "/command-center/platform",
+    roles: ["super_admin"],
+  },
+  {
+    path: "/hq",
+    roles: ["super_admin"],
+  },
+  {
+    path: "/owner",
+    roles: ["super_admin", "lab_owner", "lab_manager"],
   },
 ];
 

@@ -10,7 +10,7 @@ export default async function ReportsPage() {
   const data = await getOpsReports(session);
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/reports">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/reports">
       <ReportsDashboard data={data} />
     </AppShell>
   );

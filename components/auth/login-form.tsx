@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { loginAction } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,11 @@ export function LoginForm({ error }: { error?: string }) {
       <Button type="submit" className="w-full">
         Sign in
       </Button>
+      <p className="text-center text-sm text-muted-foreground">
+        <Link href="/auth/reset-password" className="text-primary hover:underline">
+          Forgot password?
+        </Link>
+      </p>
     </form>
   );
 }

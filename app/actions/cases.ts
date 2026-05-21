@@ -6,6 +6,7 @@ import { checkMissingInformation } from "@/lib/cases/missing-info";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { calculateCasePriority } from "@/lib/scoring/case-priority";
 import { createCaseSchema, parseToothNumbers } from "@/lib/validations/case";
+import { calculateCasePriceForDoctor } from "@/lib/pricing/calculate-case-price";
 
 export type CreateCaseActionState = {
   ok: boolean;
@@ -109,16 +110,58 @@ export async function createCaseAction(
   const input = parsed.data;
   const toothNumbers = parseToothNumbers(input.toothNumbers);
   const missing = checkMissingInformation(input, []);
-  const price = await getDoctorPrice({
-    labId: session.activeLabId,
-    doctorId: input.doctorId,
-    workType: input.workType,
-    material: input.material,
-    unitsCount: input.unitsCount,
-  });
+
+  // Read catalog IDs passed from the form (optional)
+  const operationId = getString(formData, "operationId") || null;
+  const materialId = getString(formData, "materialId") || null;
+
+  // Resolve pricing: catalog-based when operationId is present, legacy otherwise
+  let totalPrice = 0;
+  let unitPrice = 0;
+  let isVipDoctor = false;
+  let pricingSource: "catalog" | "price_list" | "missing" = "missing";
+
+  if (operationId) {
+    const catalogPrice = await calculateCasePriceForDoctor({
+      labId: session.activeLabId,
+      doctorId: input.doctorId,
+      operationId,
+      materialId,
+      unitsCount: input.unitsCount,
+    });
+    if (!catalogPrice.missingPrices) {
+      totalPrice = catalogPrice.total;
+      unitPrice = catalogPrice.lines[0]?.unitPrice ?? 0;
+      pricingSource = "catalog";
+    }
+  }
+
+  if (pricingSource === "missing") {
+    const legacyPrice = await getDoctorPrice({
+      labId: session.activeLabId,
+      doctorId: input.doctorId,
+      workType: input.workType,
+      material: input.material,
+      unitsCount: input.unitsCount,
+    });
+    totalPrice = legacyPrice.totalPrice;
+    unitPrice = legacyPrice.unitPrice;
+    isVipDoctor = legacyPrice.isVipDoctor;
+    if (legacyPrice.totalPrice > 0) pricingSource = "price_list";
+  } else {
+    const supabase = await createSupabaseServerClient();
+    const { data } = await supabase
+      .from("doctors")
+      .select("is_vip")
+      .eq("id", input.doctorId)
+      .eq("lab_id", session.activeLabId)
+      .maybeSingle<{ is_vip: boolean }>();
+    isVipDoctor = Boolean(data?.is_vip);
+  }
+
   const priorityScore = calculateCasePriority({
     ...input,
-    isVipDoctor: price.isVipDoctor,
+    isVipDoctor,
   });
   const currentStage =
     missing.status === "missing" ? "waiting_doctor_info" : "information_check";
@@ -152,7 +195,7 @@ export async function createCaseAction(
       requires_doctor_approval: input.requiresDoctorApproval,
       missing_info_status: missing.status,
       missing_info_fields: missing.requiredMissing,
-      total_price: price.totalPrice,
+      total_price: totalPrice,
       physical_impression_received: input.physicalImpressionReceived,
       preparation_photo_received: input.preparationPhotoReceived,
       implant_system: input.implantSystem || null,
@@ -171,7 +214,21 @@ export async function createCaseAction(
     return { ok: false, message: error.message };
   }
 
+  const caseItemsInsert = supabase.from("case_items").insert({
+    lab_id: session.activeLabId,
+    case_id: insertedCase.id,
+    tooth_numbers: toothNumbers.length > 0 ? toothNumbers : [],
+    work_type: input.workType,
+    material: input.material || null,
+    shade: input.shade || null,
+    units_count: input.unitsCount,
+    unit_price: unitPrice,
+    operation_id: operationId,
+    material_id: materialId,
+  });
+
   await Promise.all([
+    caseItemsInsert,
     supabase.from("case_stage_logs").insert({
       lab_id: session.activeLabId,
       case_id: insertedCase.id,
@@ -190,7 +247,9 @@ export async function createCaseAction(
         missing_required: missing.requiredMissing,
         missing_recommended: missing.recommendedMissing,
         priority_score: priorityScore,
-        calculated_price: price.totalPrice,
+        calculated_price: totalPrice,
+        pricing_source: pricingSource,
+        missing_price: pricingSource === "missing",
       },
     }),
   ]);

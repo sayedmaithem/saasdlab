@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { hasRole } from "@/lib/permissions";
 import { requireAuth } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createDoctorSchema, upsertPriceSchema } from "@/lib/validations/doctor";
+import { createDoctorSchema, updateDoctorSchema, upsertPriceSchema } from "@/lib/validations/doctor";
 
 export type ActionState = {
   ok: boolean;
@@ -82,6 +82,62 @@ export async function createDoctorAction(formData: FormData): Promise<ActionStat
   revalidatePath("/clinics");
 
   return { ok: true, message: "Doctor created successfully." };
+}
+
+export async function updateDoctorAction(formData: FormData): Promise<ActionState> {
+  const session = await requireAuth();
+
+  if (!canWriteDoctors(session.roles)) {
+    return { ok: false, message: "You do not have permission to edit doctors." };
+  }
+
+  const parsed = updateDoctorSchema.safeParse({
+    doctorId: getString(formData, "doctorId"),
+    fullName: getString(formData, "fullName"),
+    phone: getString(formData, "phone"),
+    email: getString(formData, "email"),
+    clinicId: getString(formData, "clinicId"),
+    address: getString(formData, "address"),
+    isVip: getBoolean(formData, "isVip"),
+    isActive: getBoolean(formData, "isActive"),
+    notes: getString(formData, "notes"),
+    paymentTerms: getString(formData, "paymentTerms"),
+    defaultPriceGroup: getString(formData, "defaultPriceGroup"),
+  });
+
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid data." };
+  }
+
+  const input = parsed.data;
+  const labId = requireLab(session);
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase
+    .from("doctors")
+    .update({
+      display_name: input.fullName,
+      phone: input.phone || null,
+      email: input.email || null,
+      default_clinic_id: input.clinicId || null,
+      address: input.address || null,
+      is_vip: input.isVip,
+      is_active: input.isActive,
+      notes: input.notes || null,
+      payment_terms: input.paymentTerms || null,
+      default_price_group: input.defaultPriceGroup || null,
+    })
+    .eq("id", input.doctorId)
+    .eq("lab_id", labId);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/doctors");
+  revalidatePath(`/doctors/${input.doctorId}`);
+
+  return { ok: true, message: "Doctor updated successfully." };
 }
 
 export async function upsertDoctorPriceAction(

@@ -34,7 +34,7 @@ export default async function DoctorsPage({
   });
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/doctors">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/doctors">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-muted-foreground">

@@ -273,6 +273,39 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["cases"]["Insert"]>;
         Relationships: [];
       };
+      case_items: {
+        Row: {
+          id: string;
+          lab_id: string;
+          case_id: string;
+          tooth_numbers: unknown;
+          work_type: string;
+          material: string | null;
+          shade: string | null;
+          units_count: number;
+          unit_price: number;
+          total_price: number;
+          operation_id: string | null;
+          material_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          case_id: string;
+          tooth_numbers?: unknown;
+          work_type: string;
+          material?: string | null;
+          shade?: string | null;
+          units_count?: number;
+          unit_price?: number;
+          operation_id?: string | null;
+          material_id?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["case_items"]["Insert"]>;
+        Relationships: [];
+      };
 	      case_stage_logs: {
 	        Row: {
 	          id: string;
@@ -915,6 +948,244 @@ export type Database = {
 	          created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["case_files"]["Insert"]>;
+        Relationships: [];
+      };
+      lab_operations: {
+        Row: {
+          id: string;
+          lab_id: string;
+          name: string;
+          code: string | null;
+          category: string | null;
+          description: string | null;
+          default_units: number;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          name: string;
+          code?: string | null;
+          category?: string | null;
+          description?: string | null;
+          default_units?: number;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["lab_operations"]["Insert"]>;
+        Relationships: [];
+      };
+      lab_materials: {
+        Row: {
+          id: string;
+          lab_id: string;
+          name: string;
+          code: string | null;
+          category: string | null;
+          shade_required: boolean;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          name: string;
+          code?: string | null;
+          category?: string | null;
+          shade_required?: boolean;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["lab_materials"]["Insert"]>;
+        Relationships: [];
+      };
+      price_groups: {
+        Row: {
+          id: string;
+          lab_id: string;
+          name: string;
+          description: string | null;
+          is_default: boolean;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          name: string;
+          description?: string | null;
+          is_default?: boolean;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["price_groups"]["Insert"]>;
+        Relationships: [];
+      };
+      operation_prices: {
+        Row: {
+          id: string;
+          lab_id: string;
+          price_group_id: string | null;
+          operation_id: string | null;
+          material_id: string | null;
+          unit_price: number;
+          currency: string;
+          effective_from: string;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          price_group_id?: string | null;
+          operation_id?: string | null;
+          material_id?: string | null;
+          unit_price?: number;
+          currency?: string;
+          effective_from?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["operation_prices"]["Insert"]>;
+        Relationships: [];
+      };
+      technician_operation_rates: {
+        Row: {
+          id: string;
+          lab_id: string;
+          technician_id: string;
+          operation_id: string | null;
+          material_id: string | null;
+          rate_type: "per_unit" | "fixed" | "hourly";
+          rate_amount: number;
+          currency: string;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          technician_id: string;
+          operation_id?: string | null;
+          material_id?: string | null;
+          rate_type?: "per_unit" | "fixed" | "hourly";
+          rate_amount?: number;
+          currency?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["technician_operation_rates"]["Insert"]>;
+        Relationships: [];
+      };
+      portal_invitations: {
+        Row: {
+          id: string;
+          lab_id: string;
+          email: string;
+          full_name: string | null;
+          role: string;
+          linked_record_type: string | null;
+          linked_record_id: string | null;
+          status: string;
+          token_hash: string | null;
+          invited_by: string | null;
+          accepted_by: string | null;
+          expires_at: string | null;
+          accepted_at: string | null;
+          revoked_at: string | null;
+          metadata: Record<string, unknown>;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          email: string;
+          full_name?: string | null;
+          role: string;
+          linked_record_type?: string | null;
+          linked_record_id?: string | null;
+          status?: string;
+          token_hash?: string | null;
+          invited_by?: string | null;
+          accepted_by?: string | null;
+          expires_at?: string | null;
+          accepted_at?: string | null;
+          revoked_at?: string | null;
+          metadata?: Record<string, unknown>;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["portal_invitations"]["Insert"]>;
+        Relationships: [];
+      };
+      access_audit_logs: {
+        Row: {
+          id: string;
+          lab_id: string;
+          actor_user_id: string | null;
+          target_user_id: string | null;
+          action: string;
+          role: string | null;
+          linked_record_type: string | null;
+          linked_record_id: string | null;
+          details: Record<string, unknown>;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          actor_user_id?: string | null;
+          target_user_id?: string | null;
+          action: string;
+          role?: string | null;
+          linked_record_type?: string | null;
+          linked_record_id?: string | null;
+          details?: Record<string, unknown>;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["access_audit_logs"]["Insert"]>;
+        Relationships: [];
+      };
+      portal_access_templates: {
+        Row: {
+          id: string;
+          lab_id: string;
+          name: string;
+          role: string;
+          description: string | null;
+          permissions: Record<string, unknown>;
+          is_default: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          name: string;
+          role: string;
+          description?: string | null;
+          permissions?: Record<string, unknown>;
+          is_default?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["portal_access_templates"]["Insert"]>;
         Relationships: [];
       };
     };

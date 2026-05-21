@@ -13,6 +13,7 @@ import type {
   SelectOption,
   StageMetric,
 } from "@/lib/types";
+import type { AuthSessionContext } from "@/types/app";
 
 type CaseRow = {
   id: string;
@@ -173,7 +174,7 @@ function toCaseSummary(row: CaseRow): CaseSummary {
   };
 }
 
-export async function getDashboardData(): Promise<DashboardData> {
+export async function getDashboardData(session: AuthSessionContext): Promise<DashboardData> {
   if (!hasSupabaseEnv()) {
     const pendingApprovals = previewCases.filter(
       (item) => item.stage === "doctor_approval",
@@ -191,15 +192,10 @@ export async function getDashboardData(): Promise<DashboardData> {
     };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!session.activeLabId) {
     return {
       source: "supabase",
-      labName: "LabFlow",
+      labName: session.labName ?? "LabFlow",
       kpis: buildKpis([], 0),
       stageMetrics: [],
       activeCases: [],
@@ -209,11 +205,13 @@ export async function getDashboardData(): Promise<DashboardData> {
     };
   }
 
+  const supabase = await createSupabaseServerClient();
   const { data: cases, error } = await supabase
     .from("cases")
     .select(
       "id, case_number, patient_display, stage, priority, due_date, restoration_type, doctors(display_name), clinics(name), profiles(full_name)",
     )
+    .eq("lab_id", session.activeLabId)
     .order("created_at", { ascending: false })
     .limit(40)
     .returns<CaseRow[]>();
@@ -229,7 +227,7 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   return {
     source: "supabase",
-    labName: "LabFlow",
+    labName: session.labName ?? "LabFlow",
     kpis: buildKpis(activeCases, pendingApprovals),
     stageMetrics: buildStageMetrics(activeCases),
     activeCases,
@@ -239,57 +237,96 @@ export async function getDashboardData(): Promise<DashboardData> {
   };
 }
 
-export async function getCaseFormOptions(): Promise<{
+export type DoctorOption = SelectOption & { clinicId: string | null };
+export type CatalogOption = SelectOption & { defaultUnits: number };
+
+export async function getCaseFormOptions(session: AuthSessionContext): Promise<{
   source: "supabase" | "preview";
-  doctors: SelectOption[];
+  doctors: DoctorOption[];
   clinics: SelectOption[];
+  operations: CatalogOption[];
+  materials: SelectOption[];
 }> {
   if (!hasSupabaseEnv()) {
     return {
       source: "preview",
       doctors: [
-        { label: "Dr. Zain Kareem", value: "00000000-0000-4000-8000-000000000001" },
-        { label: "Dr. Noor Abbas", value: "00000000-0000-4000-8000-000000000002" },
+        { label: "Dr. Zain Kareem", value: "00000000-0000-4000-8000-000000000001", clinicId: "00000000-0000-4000-8000-000000000101" },
+        { label: "Dr. Noor Abbas", value: "00000000-0000-4000-8000-000000000002", clinicId: "00000000-0000-4000-8000-000000000102" },
       ],
       clinics: [
         { label: "Pearl Dental Center", value: "00000000-0000-4000-8000-000000000101" },
         { label: "Noor Smile Clinic", value: "00000000-0000-4000-8000-000000000102" },
       ],
+      operations: [],
+      materials: [],
     };
   }
 
+  if (!session.activeLabId) {
+    return { source: "supabase", doctors: [], clinics: [], operations: [], materials: [] };
+  }
+
   const supabase = await createSupabaseServerClient();
-  const [{ data: doctors, error: doctorsError }, { data: clinics, error: clinicsError }] =
-    await Promise.all([
-      supabase
-        .from("doctors")
-        .select("id, display_name")
-        .order("display_name")
-        .returns<Array<{ id: string; display_name: string }>>(),
-      supabase
-        .from("clinics")
-        .select("id, name")
-        .order("name")
-        .returns<Array<{ id: string; name: string }>>(),
-    ]);
+  const [
+    { data: doctors, error: doctorsError },
+    { data: clinics, error: clinicsError },
+    { data: operations },
+    { data: materials },
+  ] = await Promise.all([
+    supabase
+      .from("doctors")
+      .select("id, display_name, default_clinic_id")
+      .eq("lab_id", session.activeLabId)
+      .eq("is_active", true)
+      .order("display_name")
+      .returns<Array<{ id: string; display_name: string; default_clinic_id: string | null }>>(),
+    supabase
+      .from("clinics")
+      .select("id, name")
+      .eq("lab_id", session.activeLabId)
+      .order("name")
+      .returns<Array<{ id: string; name: string }>>(),
+    supabase
+      .from("lab_operations")
+      .select("id, name, default_units")
+      .eq("lab_id", session.activeLabId)
+      .eq("is_active", true)
+      .order("sort_order")
+      .order("name")
+      .returns<Array<{ id: string; name: string; default_units: number }>>(),
+    supabase
+      .from("lab_materials")
+      .select("id, name")
+      .eq("lab_id", session.activeLabId)
+      .eq("is_active", true)
+      .order("sort_order")
+      .order("name")
+      .returns<Array<{ id: string; name: string }>>(),
+  ]);
 
-  if (doctorsError) {
-    throw new Error(doctorsError.message);
-  }
-
-  if (clinicsError) {
-    throw new Error(clinicsError.message);
-  }
+  if (doctorsError) throw new Error(doctorsError.message);
+  if (clinicsError) throw new Error(clinicsError.message);
 
   return {
     source: "supabase",
     doctors: (doctors ?? []).map((doctor) => ({
       label: doctor.display_name,
       value: doctor.id,
+      clinicId: doctor.default_clinic_id,
     })),
     clinics: (clinics ?? []).map((clinic) => ({
       label: clinic.name,
       value: clinic.id,
+    })),
+    operations: (operations ?? []).map((op) => ({
+      label: op.name,
+      value: op.id,
+      defaultUnits: op.default_units,
+    })),
+    materials: (materials ?? []).map((m) => ({
+      label: m.name,
+      value: m.id,
     })),
   };
 }

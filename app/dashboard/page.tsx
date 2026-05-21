@@ -15,7 +15,7 @@ import { getOpsReports } from "@/lib/data/reports";
 export default async function DashboardPage() {
   const session = await requireRouteAccess("/dashboard");
   const [data, reports] = await Promise.all([
-    getDashboardData(),
+    getDashboardData(session),
     getOpsReports(session),
   ]);
 

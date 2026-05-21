@@ -441,6 +441,7 @@ export async function getCaseDetail(
       .eq("lab_id", labId)
       .eq("case_id", caseId)
       .order("created_at", { ascending: false })
+      .limit(60) // Performance: cap stage log history at 60 entries
       .returns<
         Array<{
           id: string;
@@ -456,6 +457,7 @@ export async function getCaseDetail(
       .eq("lab_id", labId)
       .eq("case_id", caseId)
       .order("created_at", { ascending: false })
+      .limit(80) // Performance: cap timeline at 80 entries
       .returns<
 	        TimelineRow[]
 	      >(),
@@ -490,6 +492,7 @@ export async function getCaseDetail(
 	      .eq("lab_id", labId)
 	      .eq("case_id", caseId)
 	      .order("created_at", { ascending: true })
+	      .limit(100) // Performance: cap comments at 100 per case
 	      .returns<CaseCommentRow[]>(),
 	    supabase
 	      .from("quality_checks")

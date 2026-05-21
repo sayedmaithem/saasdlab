@@ -17,7 +17,7 @@ export default async function NewDoctorPage() {
   const data = await getDoctorList(session, {});
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/doctors">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/doctors">
       <div className="mb-5">
         <p className="text-sm font-medium text-muted-foreground">
           Relationship management

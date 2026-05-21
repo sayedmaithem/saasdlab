@@ -15,7 +15,7 @@ export default async function DoctorPortalCaseDetailPage({
   const item = await getCaseDetail(session, id, false);
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/doctor-portal">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/doctor-portal">
       <CaseDetail item={item} canViewFinance={false} />
     </AppShell>
   );

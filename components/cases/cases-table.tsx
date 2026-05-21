@@ -5,6 +5,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { stageLabels, productionStages } from "@/lib/constants/workflow";
 import type { CaseListItem } from "@/lib/data/cases";
 
+const STATUS_LABELS: Record<string, string> = {
+  active: "Active",
+  waiting_doctor_info: "Waiting info",
+  waiting_approval: "Awaiting approval",
+  completed: "Completed",
+  cancelled: "Cancelled",
+  on_hold: "On hold",
+};
+
+const STATUS_TONE: Record<string, "amber" | "green" | "red" | "neutral"> = {
+  active: "green",
+  waiting_doctor_info: "amber",
+  waiting_approval: "amber",
+  completed: "neutral",
+  cancelled: "red",
+  on_hold: "neutral",
+};
+
 function dueTone(item: CaseListItem) {
   if (item.isOverdue) return "text-red-700";
   if (!item.dueDate) return "text-muted-foreground";
@@ -78,6 +96,23 @@ export function CasesTable({
         <Button type="submit">Filter</Button>
       </form>
 
+      {cases.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center space-y-3">
+            <p className="text-base font-medium text-foreground">No cases found</p>
+            <p className="text-sm text-muted-foreground">
+              {Object.values(filters).some(Boolean)
+                ? "Try clearing the filters above."
+                : "No cases have been created yet. Submit the first case to get started."}
+            </p>
+            {!Object.values(filters).some(Boolean) && (
+              <Link href="/cases/new" className="inline-block text-sm font-medium text-primary hover:underline">
+                Create first case →
+              </Link>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
       <Card>
         <CardContent className="overflow-x-auto p-0">
           <table className="w-full min-w-[1080px] text-sm">
@@ -106,11 +141,11 @@ export function CasesTable({
                   <td className="p-4">{item.patientName}</td>
                   <td className="p-4">{item.workType}</td>
                   <td className="p-4">
-                    <Badge tone={item.status === "waiting_doctor_info" ? "amber" : "green"}>
-                      {item.status.replaceAll("_", " ")}
+                    <Badge tone={STATUS_TONE[item.status] ?? "neutral"}>
+                      {STATUS_LABELS[item.status] ?? item.status.replaceAll("_", " ")}
                     </Badge>
                   </td>
-                  <td className="p-4">{item.currentStage.replaceAll("_", " ")}</td>
+                  <td className="p-4">{stageLabels[item.currentStage as keyof typeof stageLabels] ?? item.currentStage.replaceAll("_", " ")}</td>
                   <td className="p-4 font-semibold">{item.priorityScore}</td>
                   <td className={`p-4 font-medium ${dueTone(item)}`}>
                     {item.dueDate ?? "Not set"}
@@ -122,6 +157,7 @@ export function CasesTable({
           </table>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

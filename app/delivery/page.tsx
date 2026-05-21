@@ -10,7 +10,14 @@ export default async function DeliveryPage() {
   const data = await getDeliveryData(session);
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/delivery">
+    <AppShell
+      labName={session.labName ?? "LabFlow"}
+      session={session}
+      activeHref="/delivery"
+      eyebrow="Lab Operations"
+      title="Delivery Queue"
+      cloudStatus="connected"
+    >
       <DeliveryDashboard items={data.items} deliveryPeople={data.deliveryPeople} />
     </AppShell>
   );

@@ -15,7 +15,7 @@ export default async function DoctorProfilePage({
   const doctor = await getDoctorProfile(session, id);
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/doctors">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/doctors">
       <DoctorProfile doctor={doctor} />
     </AppShell>
   );

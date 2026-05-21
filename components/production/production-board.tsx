@@ -36,15 +36,6 @@ function badgeToneForRisk(risk: DelayRisk) {
   return "green" as const;
 }
 
-function skillMatch(card: ProductionCaseCard, technician?: ProductionTechnician) {
-  if (!technician) return "Unassigned";
-  const skills = new Set(technician.skills.map((skill) => skill.toLowerCase()));
-  const signals = [card.currentStage, card.workType, card.material ?? ""].map((item) =>
-    item.toLowerCase(),
-  );
-  return signals.some((signal) => skills.has(signal)) ? "Skill match" : "General fit";
-}
-
 function CaseCard({
   card,
   technicians,
@@ -61,9 +52,6 @@ function CaseCard({
 }) {
   const [isPending, startTransition] = useTransition();
   const [targetStage, setTargetStage] = useState<ProductionStage>(card.currentStage);
-  const assignedTechnician = technicians.find(
-    (technician) => technician.profileId === card.assignedTechnicianId,
-  );
 
   const currentIndex = kanbanStages.indexOf(card.currentStage);
   const prevStage = currentIndex > 0 ? kanbanStages[currentIndex - 1] : null;
@@ -95,7 +83,7 @@ function CaseCard({
   }
 
   const isBlocked =
-    card.delayRisk === "blocked" || card.missingInfoStatus === "missing";
+    card.delayRisk === "blocked" || card.missingInfoStatus !== "complete";
   const isOverdue = card.delayRisk === "overdue";
 
   return (
@@ -103,59 +91,59 @@ function CaseCard({
       {...dragHandleProps}
       className={`space-y-3 rounded-lg border bg-card p-3 shadow-sm ${
         isPending ? "opacity-60" : ""
-      } ${isBlocked ? "border-amber-300" : ""}`}
+      } ${isBlocked ? "border-red-300 dark:border-red-800" : ""}`}
     >
-      <div className="flex items-start justify-between gap-3">
+      {/* Card header */}
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <a
-            href={`/cases/${card.id}`}
-            className="truncate text-sm font-semibold hover:underline"
-          >
-            {card.caseNumber}
-          </a>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <a
+              href={`/cases/${card.id}`}
+              className="text-sm font-semibold hover:underline"
+            >
+              {card.caseNumber}
+            </a>
+            {card.isUrgent && <Badge tone="red">Urgent</Badge>}
+          </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {card.doctorName}
+            {card.patientName} · {card.doctorName}
           </p>
-          <p className="truncate text-xs text-muted-foreground">{card.patientName}</p>
         </div>
-        <Badge tone={card.isUrgent ? "red" : "neutral"}>P{card.priorityScore}</Badge>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <p>
-          <span className="text-muted-foreground">Work</span>
-          <span className="block font-medium">{card.workType}</span>
-        </p>
-        <p>
-          <span className="text-muted-foreground">Units</span>
-          <span className="block font-medium">{card.unitsCount}</span>
-        </p>
-        <p>
-          <span className="text-muted-foreground">Due</span>
-          <span className={`block font-medium ${isOverdue ? "text-red-600" : ""}`}>
-            {card.dueDate ?? "Not set"}
-          </span>
-        </p>
-        <p>
-          <span className="text-muted-foreground">Technician</span>
-          <span className="block font-medium">
-            {card.assignedTechnicianName ?? "Unassigned"}
-          </span>
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-1">
-        {card.isUrgent ? <Badge tone="red">Urgent</Badge> : null}
-        {card.missingInfoStatus === "missing" ? (
-          <Badge tone="amber">Missing info</Badge>
-        ) : null}
-        <Badge tone={badgeToneForRisk(card.delayRisk)}>
+        <Badge tone={badgeToneForRisk(card.delayRisk)} className="shrink-0">
           {getDelayRiskLabel(card.delayRisk)}
         </Badge>
-        <Badge tone={card.hasPassedQc ? "green" : "neutral"}>
-          {card.hasPassedQc ? "QC passed" : "QC pending"}
-        </Badge>
-        <Badge tone="blue">{skillMatch(card, assignedTechnician)}</Badge>
+      </div>
+
+      {/* Work details */}
+      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+        <div>
+          <span className="text-muted-foreground">Work</span>
+          <p className="font-medium truncate">{card.workType}</p>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Units</span>
+          <p className="font-medium">{card.unitsCount}</p>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Due</span>
+          <p className={`font-medium ${isOverdue ? "text-red-600 dark:text-red-400" : ""}`}>
+            {card.dueDate ?? "—"}
+          </p>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Technician</span>
+          <p className={`font-medium truncate ${!card.assignedTechnicianName ? "text-amber-600 dark:text-amber-400 italic" : ""}`}>
+            {card.assignedTechnicianName ?? "Unassigned"}
+          </p>
+        </div>
+      </div>
+
+      {/* Status badges */}
+      <div className="flex flex-wrap gap-1">
+        {card.missingInfoStatus !== "complete" && (
+          <Badge tone="amber">Missing info</Badge>
+        )}
+        {card.hasPassedQc && <Badge tone="green">QC ✓</Badge>}
       </div>
 
       {canManageBoard ? (
@@ -263,9 +251,13 @@ type ColumnState = {
 export function ProductionBoard({
   data,
   canManageBoard,
+  hasCustomWorkflow = false,
+  defaultWorkflowName = null,
 }: {
   data: ProductionBoardData;
   canManageBoard: boolean;
+  hasCustomWorkflow?: boolean;
+  defaultWorkflowName?: string | null;
 }) {
   const [message, setMessage] = useState<string | null>(null);
   const [columns, setColumns] = useState<ColumnState[]>(data.columns);
@@ -332,39 +324,39 @@ export function ProductionBoard({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Production workflow</p>
-          <h2 className="mt-1 text-2xl font-semibold">Production Kanban</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {totalCases} active cases across {data.columns.length} stages.
-            {canManageBoard ? " Drag cards between columns to move stages." : ""}
-          </p>
-          {/* Workflow mode badge */}
-          <div className="mt-3 flex items-center gap-2">
-            <Badge tone="neutral">
-              Fixed enum — 18 stages
-            </Badge>
-            <a
-              href="/command-center/master-data/workflows"
-              className="text-xs text-muted-foreground hover:text-foreground underline"
-            >
-              Configure custom workflow →
-            </a>
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge tone={hasCustomWorkflow ? "green" : "neutral"}>
+            {hasCustomWorkflow
+              ? `Custom workflow${defaultWorkflowName ? `: ${defaultWorkflowName}` : ""}`
+              : "Fixed workflow · 18 stages"}
+          </Badge>
+          <span className="text-sm text-muted-foreground">
+            {totalCases} active case{totalCases === 1 ? "" : "s"}
+            {canManageBoard ? " · drag to move" : ""}
+          </span>
         </div>
-        <Button asChild variant="outline">
-          <a href="/technicians/workspace">Technician workspace</a>
-        </Button>
+        <div className="flex gap-2">
+          {!hasCustomWorkflow && (
+            <Button asChild variant="ghost" size="sm">
+              <a href="/command-center/master-data/workflows">Configure workflow</a>
+            </Button>
+          )}
+          <Button asChild variant="outline" size="sm">
+            <a href="/technicians/workspace">Technician workspace</a>
+          </Button>
+        </div>
       </div>
 
       {message ? (
         <div
           className={`rounded-lg border p-3 text-sm ${
             message.toLowerCase().includes("updated") ||
-            message.toLowerCase().includes("assigned")
-              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-              : "border-amber-200 bg-amber-50 text-amber-900"
+            message.toLowerCase().includes("assigned") ||
+            message.toLowerCase().includes("moved") ||
+            message.toLowerCase().includes("success")
+              ? "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200"
+              : "border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/30 dark:text-red-200"
           }`}
         >
           {message}
@@ -429,12 +421,38 @@ export function ProductionBoard({
                   }`}
                 >
                   <div
-                    className={`sticky top-0 z-10 flex items-center justify-between gap-2 border-b px-3 py-3 ${
-                      isBottleneck ? "bg-amber-50" : "bg-card"
+                    className={`sticky top-0 z-10 flex items-start justify-between gap-2 border-b px-3 py-3 ${
+                      isBottleneck ? "bg-amber-50 dark:bg-amber-950/40" : "bg-card"
                     }`}
                   >
-                    <h3 className="text-sm font-semibold">{stageLabels[column.stage]}</h3>
-                    <div className="flex items-center gap-1">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold truncate">{stageLabels[column.stage]}</h3>
+                      {(() => {
+                        const blockedCount = column.cases.filter(
+                          (c) =>
+                            c.delayRisk === "blocked" ||
+                            c.missingInfoStatus !== "complete",
+                        ).length;
+                        const unassignedCount = column.cases.filter(
+                          (c) => !c.assignedTechnicianId,
+                        ).length;
+                        return (blockedCount > 0 || unassignedCount > 0) ? (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {blockedCount > 0 && (
+                              <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                                {blockedCount} blocked
+                              </span>
+                            )}
+                            {unassignedCount > 0 && (
+                              <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                                {unassignedCount} unassigned
+                              </span>
+                            )}
+                          </div>
+                        ) : null;
+                      })()}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
                       <Badge tone={isBottleneck ? "amber" : "neutral"}>
                         {column.cases.length}
                       </Badge>

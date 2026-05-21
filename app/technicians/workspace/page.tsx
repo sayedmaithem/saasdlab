@@ -10,7 +10,14 @@ export default async function TechnicianWorkspacePage() {
   const data = await getTechnicianWorkspaceData(session);
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/technicians">
+    <AppShell
+      labName={session.labName ?? "LabFlow"}
+      session={session}
+      activeHref="/technicians/workspace"
+      eyebrow="My Workspace"
+      title={data.technician?.name ?? "Production Queue"}
+      cloudStatus="connected"
+    >
       <TechnicianWorkspace data={data} />
     </AppShell>
   );

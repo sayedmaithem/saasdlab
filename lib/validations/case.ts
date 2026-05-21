@@ -12,7 +12,7 @@ export const createCaseSchema = z.object({
   doctorId: z.uuid("Choose a doctor"),
   clinicId: z.uuid("Choose a clinic"),
   patientName: z.string().min(2, "Patient name is required").max(120),
-  workType: z.enum(workTypes),
+  workType: z.string().min(1, "Work type is required").max(80),
   material: z.string().max(80).optional(),
   shade: z.string().max(24).optional(),
   unitsCount: z.coerce.number().int().min(1).max(64),

@@ -131,6 +131,41 @@ export async function updateDeliveryAction(formData: FormData): Promise<Delivery
       return { ok: false, message: "Delivery cannot start until QC has passed." };
     }
 
+    // blocks_delivery gate — checks if the case's current stage is flagged as blocking delivery.
+    // Only checked on the initial "assign" action; subsequent updates (out, delivered, failed)
+    // are allowed to proceed without this check.
+    // Falls back silently if the lab has no workflow configured.
+    if (action === "assign") {
+      const checkSupabase = await createSupabaseServerClient();
+      const { data: caseStageRow } = await checkSupabase
+        .from("cases")
+        .select("current_stage, stage")
+        .eq("lab_id", session.activeLabId)
+        .eq("id", parsed.data.caseId)
+        .maybeSingle<{ current_stage: string | null; stage: string }>();
+
+      if (caseStageRow) {
+        const currentStageKey = (caseStageRow.current_stage ?? caseStageRow.stage) as string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: blockedStage } = await (checkSupabase as any)
+          .from("lab_workflow_stages")
+          .select("stage_key")
+          .eq("lab_id", session.activeLabId)
+          .eq("stage_key", currentStageKey)
+          .eq("blocks_delivery", true)
+          .eq("is_active", true)
+          .limit(1)
+          .maybeSingle();
+
+        if (blockedStage) {
+          return {
+            ok: false,
+            message: `This case is still in the "${currentStageKey.replaceAll("_", " ")}" stage which blocks delivery. Complete production before dispatching.`,
+          };
+        }
+      }
+    }
+
     const status =
       action === "assign"
         ? "assigned_to_delivery"

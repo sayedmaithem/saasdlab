@@ -2,6 +2,8 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import type { AuthSessionContext } from "@/types/app";
 
+type CloudStatus = "connected" | "preview" | "offline";
+
 export function AppShell({
   children,
   labName,
@@ -9,6 +11,7 @@ export function AppShell({
   activeHref = "/dashboard",
   title,
   eyebrow,
+  cloudStatus = "preview",
 }: {
   children: React.ReactNode;
   labName: string;
@@ -16,6 +19,7 @@ export function AppShell({
   activeHref?: string;
   title?: string;
   eyebrow?: string;
+  cloudStatus?: CloudStatus;
 }) {
   return (
     <div className="min-h-screen bg-background">
@@ -23,6 +27,7 @@ export function AppShell({
         labName={labName}
         activeHref={activeHref}
         roles={session.roles}
+        cloudStatus={cloudStatus}
       />
 
       <div className="lg:ps-64">

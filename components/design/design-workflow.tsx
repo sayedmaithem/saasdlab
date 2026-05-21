@@ -402,11 +402,6 @@ export function DesignWorkflow({
         </div>
       ) : null}
 
-      <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
-        3D STL viewer placeholder. TODO: connect a Desktop Sync Agent for local
-        exocad export watching and controlled background uploads.
-      </div>
-
       {latestApproved ? (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950">
           Approved design: V{latestApproved.versionNumber} on{" "}

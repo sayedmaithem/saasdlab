@@ -2,6 +2,22 @@ import { hasSupabaseEnv } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { AuthSessionContext } from "@/types/app";
 
+// ─── Types for new case form data ────────────────────────────────────────────
+
+export type DoctorClinicOption = { id: string; name: string };
+export type DoctorOperationOption = { id: string; name: string; code: string | null; category: string | null };
+export type DoctorMaterialOption = { id: string; name: string; code: string | null; shadeRequired: boolean };
+
+export type DoctorPortalFormData = {
+  /** null means no doctor record is linked to this Auth user */
+  doctorId: string | null;
+  doctorName: string;
+  defaultClinicId: string | null;
+  clinics: DoctorClinicOption[];
+  operations: DoctorOperationOption[];
+  materials: DoctorMaterialOption[];
+};
+
 export type DoctorPortalCase = {
   id: string;
   caseNumber: string;
@@ -109,5 +125,120 @@ export async function getDoctorPortalData(
       { label: "Design approval", value: String(items.filter((item) => item.currentStage === "doctor_approval").length), hint: "Awaiting response" },
       { label: "Ready delivery", value: String(items.filter((item) => item.currentStage === "ready_for_delivery").length), hint: "Ready at the lab" },
     ],
+  };
+}
+
+// ─── Form data for the new-case page ─────────────────────────────────────────
+
+type DoctorClinicsRow = { id: string; name: string };
+type DoctorOperationsRow = { id: string; name: string; code: string | null; category: string | null };
+type DoctorMaterialsRow = { id: string; name: string; code: string | null; shade_required: boolean };
+
+/**
+ * Fetches everything the doctor needs to fill in a new case:
+ *   - their own doctor record (id, name, default clinic)
+ *   - their linked clinics (from doctor_clinics join)
+ *   - active lab operations from the catalog
+ *   - active lab materials from the catalog
+ *
+ * Returns { doctorId: null } when the session user has no linked doctor record.
+ */
+export async function getDoctorPortalFormData(
+  session: AuthSessionContext,
+): Promise<DoctorPortalFormData> {
+  const labId = assertLab(session);
+
+  const empty: DoctorPortalFormData = {
+    doctorId: null,
+    doctorName: "",
+    defaultClinicId: null,
+    clinics: [],
+    operations: [],
+    materials: [],
+  };
+
+  if (!hasSupabaseEnv()) return empty;
+
+  const supabase = await createSupabaseServerClient();
+
+  // 1. Resolve linked doctor
+  const { data: doctor, error: doctorError } = await supabase
+    .from("doctors")
+    .select("id, display_name, default_clinic_id")
+    .eq("lab_id", labId)
+    .eq("profile_id", session.userId)
+    .maybeSingle<{ id: string; display_name: string; default_clinic_id: string | null }>();
+
+  if (doctorError) throw new Error(doctorError.message);
+  if (!doctor) return empty;
+
+  // 2. Fetch clinics linked to this doctor via doctor_clinics table
+  //    Fall back to default_clinic_id if doctor_clinics is empty.
+  const [
+    { data: linkedClinics, error: clinicsError },
+    { data: operations, error: opsError },
+    { data: materials, error: matsError },
+  ] = await Promise.all([
+    supabase
+      .from("doctor_clinics")
+      .select("clinics(id, name)")
+      .eq("lab_id", labId)
+      .eq("doctor_id", doctor.id)
+      .returns<Array<{ clinics: DoctorClinicsRow | null }>>(),
+    supabase
+      .from("lab_operations")
+      .select("id, name, code, category")
+      .eq("lab_id", labId)
+      .eq("is_active", true)
+      .order("sort_order")
+      .order("name")
+      .returns<DoctorOperationsRow[]>(),
+    supabase
+      .from("lab_materials")
+      .select("id, name, code, shade_required")
+      .eq("lab_id", labId)
+      .eq("is_active", true)
+      .order("sort_order")
+      .order("name")
+      .returns<DoctorMaterialsRow[]>(),
+  ]);
+
+  if (clinicsError) throw new Error(clinicsError.message);
+  if (opsError) throw new Error(opsError.message);
+  if (matsError) throw new Error(matsError.message);
+
+  // Build clinic options: prefer doctor_clinics join, fall back to default_clinic_id
+  let clinicOptions: DoctorClinicOption[] = (linkedClinics ?? [])
+    .map((row) => row.clinics)
+    .filter((c): c is DoctorClinicsRow => c !== null)
+    .map((c) => ({ id: c.id, name: c.name }));
+
+  if (clinicOptions.length === 0 && doctor.default_clinic_id) {
+    // Fetch the default clinic name
+    const { data: defaultClinic } = await supabase
+      .from("clinics")
+      .select("id, name")
+      .eq("id", doctor.default_clinic_id)
+      .maybeSingle<DoctorClinicsRow>();
+    if (defaultClinic) clinicOptions = [{ id: defaultClinic.id, name: defaultClinic.name }];
+  }
+
+  return {
+    doctorId: doctor.id,
+    doctorName: doctor.display_name,
+    defaultClinicId: doctor.default_clinic_id,
+    clinics: clinicOptions,
+    operations: (operations ?? []).map((op) => ({
+      id: op.id,
+      name: op.name,
+      code: op.code,
+      category: op.category,
+    })),
+    materials: (materials ?? []).map((mat) => ({
+      id: mat.id,
+      name: mat.name,
+      code: mat.code,
+      shadeRequired: mat.shade_required,
+    })),
   };
 }

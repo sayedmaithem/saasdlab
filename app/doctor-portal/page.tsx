@@ -10,7 +10,7 @@ export default async function DoctorPortalPage() {
   const data = await getDoctorPortalData(session);
 
   return (
-    <AppShell labName="LabFlow" session={session} activeHref="/doctor-portal">
+    <AppShell labName={session.labName ?? "LabFlow"} session={session} activeHref="/doctor-portal">
       <DoctorPortalDashboard data={data} />
     </AppShell>
   );

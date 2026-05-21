@@ -106,3 +106,54 @@ export function getTransitionError(params: {
 export function transitionTitle(fromStage: ProductionStage, toStage: ProductionStage) {
   return `${stageLabels[fromStage]} moved to ${stageLabels[toStage]}`;
 }
+
+// ── Workflow Compatibility Bridge ─────────────────────────────────────────────
+//
+// This is a PREPARATORY stub for true workflow engine integration.
+//
+// Current behavior (Phase 15):
+//   The production board and moveCaseStageAction use getTransitionError() above,
+//   which applies hardcoded rules (missing info, QC pass, role check, overdue reason).
+//   The workflow_transitions and stage_requirements tables exist in the DB (migrations
+//   0017 + 0019) but are NOT YET queried by any server action.
+//
+// Future behavior (Phase 16+):
+//   validateTransitionAgainstWorkflow() will:
+//   1. Look up the lab's active workflow in lab_workflow_templates
+//   2. Find the matching workflow_transition row for (from_stage, to_stage)
+//   3. If no matching row exists → deny the move
+//   4. If allowed_roles is non-empty → check session.roles
+//   5. If requires_note → ensure a note was provided
+//   6. Check stage_requirements for the target stage
+//
+// SAFE STATE: This function is a no-op stub. Calling it returns null (no blocker).
+// It is wired in so Phase 16 can activate it with a single flag change.
+//
+// Do NOT activate (change stub to real query) until:
+//   a) At least one lab has a fully configured workflow template + stages + transitions
+//   b) Integration tests confirm no valid moves are incorrectly blocked
+//   c) Production board E2E test passes with workflow validation active
+
+export type WorkflowTransitionCheckParams = {
+  labId: string;
+  fromStage: string;
+  toStage: string;
+  roles: AppRole[];
+  hasNote: boolean;
+};
+
+/**
+ * Compatibility bridge stub.
+ *
+ * Returns null (no blocker) in Phase 15. Will query workflow_transitions in Phase 16+.
+ * See comment block above for activation requirements.
+ */
+export function validateTransitionAgainstWorkflow(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _params: WorkflowTransitionCheckParams,
+): string | null {
+  // STUB: always returns null (pass-through) until Phase 16 wires the real query.
+  // Phase 16 implementation will replace this body with a Supabase query against
+  // workflow_transitions scoped to _params.labId.
+  return null;
+}

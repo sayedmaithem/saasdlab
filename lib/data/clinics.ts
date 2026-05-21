@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { hasSupabaseEnv } from "@/lib/env";
 import type { AuthSessionContext } from "@/types/app";
 
 export type ClinicListItem = {
@@ -22,6 +23,7 @@ function assertLab(session: AuthSessionContext) {
 
 export async function getClinics(session: AuthSessionContext) {
   const labId = assertLab(session);
+  if (!hasSupabaseEnv()) return [] as ClinicListItem[];
   const supabase = await createSupabaseServerClient();
   const [{ data: clinics, error: clinicsError }, { data: doctors, error: doctorsError }] =
     await Promise.all([
