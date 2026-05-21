@@ -36,7 +36,11 @@ export type Permission = `${PermissionResource}:${PermissionAction}`;
 export type AuthSessionContext = {
   userId: string;
   email: string | null;
+  fullName: string | null;
+  phone: string | null;
+  role: AppRole;
   activeLabId: string | null;
+  labName: string | null;
   roles: AppRole[];
 };
 
