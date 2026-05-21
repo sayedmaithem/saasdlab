@@ -90,6 +90,26 @@ export const routeAccessRules: RouteAccessRule[] = [
     path: "/owner",
     roles: ["super_admin", "lab_owner", "lab_manager"],
   },
+  {
+    path: "/lab-os",
+    roles: ["super_admin", "lab_owner"],
+  },
+  {
+    path: "/finance",
+    roles: ["super_admin", "lab_owner", "accountant"],
+  },
+  {
+    path: "/inventory",
+    roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
+  },
+  {
+    path: "/cases/log",
+    roles: ["super_admin", "lab_owner", "lab_manager", "reception"],
+  },
+  {
+    path: "/settings/print",
+    roles: ["super_admin", "lab_owner"],
+  },
 ];
 
 export function isPublicPath(pathname: string) {

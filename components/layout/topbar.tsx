@@ -9,6 +9,8 @@ import type { AppRole } from "@/lib/constants/roles";
 import type { AuthSessionContext } from "@/types/app";
 import { NotificationCenter } from "@/components/ui/notification-center";
 import { AiCommandPanel } from "@/components/ui/ai-command-panel";
+import { CommandSearch } from "@/components/ui/command-search";
+import { QuickActions } from "@/components/ui/quick-actions";
 import { MobileNavButton } from "@/components/layout/mobile-nav";
 import { getNotificationsForCurrentUser } from "@/lib/data/notifications";
 import type { NotificationItem } from "@/lib/data/notifications";
@@ -69,6 +71,12 @@ export async function Topbar({
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
+        {/* Universal ⌘K search */}
+        <CommandSearch />
+
+        {/* Quick Actions palette */}
+        <QuickActions roles={session.roles} />
+
         {/* AI Command Panel trigger */}
         <AiCommandPanel />
 

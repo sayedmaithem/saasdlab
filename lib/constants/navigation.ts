@@ -17,6 +17,10 @@ import {
   Building2,
   LayoutGrid,
   Wrench,
+  Map,
+  Package,
+  TrendingUp,
+  GitCommitHorizontal,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type { AppRole } from "@/lib/constants/roles";
@@ -181,5 +185,34 @@ export const appNavigation: AppNavItem[] = [
     icon: ClipboardCheck,
     roles: ["super_admin", "lab_owner", "doctor"],
     group: "portals",
+  },
+  // ── LabOS Command OS additions ───────────────────────────────────────────
+  {
+    label: "Finance Overview",
+    href: "/finance",
+    icon: TrendingUp,
+    roles: ["super_admin", "lab_owner", "accountant"],
+    group: "finance",
+  },
+  {
+    label: "Inventory",
+    href: "/inventory",
+    icon: Package,
+    roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
+    group: "lab-ops",
+  },
+  {
+    label: "Movement Log",
+    href: "/cases/log",
+    icon: GitCommitHorizontal,
+    roles: ["super_admin", "lab_owner", "lab_manager", "reception"],
+    group: "lab-ops",
+  },
+  {
+    label: "LabOS Map",
+    href: "/lab-os",
+    icon: Map,
+    roles: ["super_admin", "lab_owner"],
+    group: "admin",
   },
 ];

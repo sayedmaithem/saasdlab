@@ -73,12 +73,12 @@ export function AppSidebar({
     >
       {/* ── Brand ── */}
       <div className="flex h-[60px] items-center gap-2.5 px-4">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm glow-primary">
           <Activity className="size-4" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-bold tracking-tight leading-none">LabFlow</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5 leading-none">Dental OS</p>
+          <p className="text-[13px] font-bold tracking-tight leading-none gradient-text">LabFlow</p>
+          <p className="text-[9px] text-muted-foreground/60 mt-0.5 leading-none uppercase tracking-widest font-semibold">Dental OS</p>
         </div>
         <span
           className={cn(
@@ -94,14 +94,14 @@ export function AppSidebar({
       <Separator />
 
       {/* ── Navigation ── */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-5">
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
         {GROUP_ORDER.map((group) => {
           const items = groupedItems[group];
           if (!items) return null;
 
           return (
             <div key={group}>
-              <p className="mb-1 px-2 text-[9px] font-bold uppercase tracking-[0.12em] text-muted-foreground/50">
+              <p className="mb-1.5 px-2 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/40">
                 {navGroupLabels[group]}
               </p>
               <div className="space-y-0.5">
@@ -127,21 +127,31 @@ export function AppSidebar({
                           : undefined
                       }
                     >
-                      {/* Active left border accent */}
+                      {/* Active left border accent — gradient stripe */}
                       {active && (
                         <span
-                          className="absolute left-0 top-1 bottom-1 w-0.5 rounded-full"
-                          style={{ background: "var(--sidebar-active-border)" }}
+                          className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full"
+                          style={{
+                            background: "linear-gradient(180deg, var(--sidebar-active-border) 0%, transparent 100%)",
+                          }}
                         />
                       )}
                       <item.icon
                         className={cn(
                           "size-[15px] shrink-0 transition-colors",
-                          active ? "text-[var(--sidebar-active-text)]" : "text-muted-foreground/70 group-hover:text-foreground",
+                          active ? "text-[var(--sidebar-active-text)]" : "text-muted-foreground/60 group-hover:text-foreground",
                         )}
                         aria-hidden
                       />
                       <span className="truncate">{item.label}</span>
+
+                      {/* Active dot indicator on right */}
+                      {active && (
+                        <span
+                          className="ml-auto size-1.5 rounded-full shrink-0"
+                          style={{ background: "var(--sidebar-active-border)" }}
+                        />
+                      )}
                     </Link>
                   );
                 })}
@@ -151,27 +161,35 @@ export function AppSidebar({
         })}
       </nav>
 
-      {/* ── User footer ── */}
+      {/* ── User footer — premium card ── */}
       <div
-        className="border-t px-3 py-3 space-y-2"
+        className="border-t px-3 py-3"
         style={{ borderColor: "var(--sidebar-border)" }}
       >
-        <div className="flex items-center gap-2">
-          <div className="size-7 shrink-0 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold text-muted-foreground uppercase">
-            {labName.charAt(0)}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold truncate leading-tight">{labName}</p>
+        <div className="rounded-lg px-2.5 py-2.5 space-y-2 hover:bg-muted/40 transition-colors cursor-default">
+          <div className="flex items-center gap-2.5">
+            {/* Avatar with role color ring */}
+            <div
+              className={cn(
+                "size-7 shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold uppercase",
+                rolePill,
+              )}
+            >
+              {labName.charAt(0)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-semibold truncate leading-tight">{labName}</p>
+              <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold mt-0.5">
+                {roleLabels[primaryRole as AppRole] ?? primaryRole.replaceAll("_", " ")}
+              </p>
+            </div>
+            {/* Cloud status dot */}
+            <span
+              className={cn("size-1.5 rounded-full shrink-0", cloudDotClass[cloudStatus])}
+              title={cloudDotTitle[cloudStatus]}
+            />
           </div>
         </div>
-        <span
-          className={cn(
-            "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold",
-            rolePill,
-          )}
-        >
-          {roleLabels[primaryRole as AppRole] ?? primaryRole.replaceAll("_", " ")}
-        </span>
       </div>
     </aside>
   );
