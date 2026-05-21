@@ -33,6 +33,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/finance/money";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { LabPulseBriefing } from "@/components/owner/lab-pulse-briefing";
 
 export default async function OwnerPage() {
   const session = await requireAuth();
@@ -69,6 +70,18 @@ export default async function OwnerPage() {
     >
       <PageShell maxWidth="2xl">
 
+        {/* ── Lab Pulse Briefing ───────────────────────────────── */}
+        <LabPulseBriefing
+          labName={session.labName ?? "Lab"}
+          activeCases={snapshot.activeCasesCount}
+          overdueCases={snapshot.overdueCasesCount}
+          casesToday={snapshot.casesTodayCount}
+          missingTechnician={insights.casesMissingTechnicianCount}
+          waitingApproval={insights.casesWaitingApprovalCount}
+          waitingQC={insights.casesWaitingQCCount}
+          readyForDelivery={insights.casesReadyForDeliveryCount}
+        />
+
         {/* ── Operational KPIs ─────────────────────────────────── */}
         <SectionHeader
           title="Live snapshot"
@@ -88,7 +101,7 @@ export default async function OwnerPage() {
                     <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       Active cases
                     </p>
-                    <p className="mt-1 text-2xl font-bold tabular-nums">
+                    <p className="stat-xl mt-1">
                       {snapshot.activeCasesCount}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">In production</p>
@@ -122,11 +135,7 @@ export default async function OwnerPage() {
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Overdue cases
                   </p>
-                  <p
-                    className={`mt-1 text-2xl font-bold tabular-nums ${
-                      hasOverdue ? "text-red-700 dark:text-red-400" : ""
-                    }`}
-                  >
+                  <p className={`stat-xl mt-1 ${hasOverdue ? "text-red-700 dark:text-red-400" : ""}`}>
                     {snapshot.overdueCasesCount}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -150,7 +159,7 @@ export default async function OwnerPage() {
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Due today
                   </p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums">
+                  <p className="stat-xl mt-1">
                     {snapshot.casesTodayCount}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -174,7 +183,7 @@ export default async function OwnerPage() {
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Outstanding
                   </p>
-                  <p className="mt-1 text-2xl font-bold tabular-nums">
+                  <p className="stat-xl mt-1">
                     {formatMoney(snapshot.totalOutstanding)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -211,7 +220,7 @@ export default async function OwnerPage() {
                     No technician
                   </p>
                   <p
-                    className={`mt-0.5 text-xl font-bold tabular-nums ${
+                    className={`mt-0.5 stat-lg ${
                       hasMissingTechnician ? "text-amber-700 dark:text-amber-400" : ""
                     }`}
                   >
@@ -245,7 +254,7 @@ export default async function OwnerPage() {
                     No price set
                   </p>
                   <p
-                    className={`mt-0.5 text-xl font-bold tabular-nums ${
+                    className={`mt-0.5 stat-lg ${
                       hasMissingPrice ? "text-amber-700 dark:text-amber-400" : ""
                     }`}
                   >
@@ -279,7 +288,7 @@ export default async function OwnerPage() {
                     Awaiting approval
                   </p>
                   <p
-                    className={`mt-0.5 text-xl font-bold tabular-nums ${
+                    className={`mt-0.5 stat-lg ${
                       hasWaitingApproval ? "text-blue-700 dark:text-blue-400" : ""
                     }`}
                   >
@@ -311,7 +320,7 @@ export default async function OwnerPage() {
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     In QC
                   </p>
-                  <p className={`mt-0.5 text-xl font-bold tabular-nums ${hasWaitingQC ? "text-purple-700 dark:text-purple-400" : ""}`}>
+                  <p className={`mt-0.5 stat-lg ${hasWaitingQC ? "text-purple-700 dark:text-purple-400" : ""}`}>
                     {insights.casesWaitingQCCount}
                   </p>
                   <p className="text-xs text-muted-foreground">Awaiting quality check</p>
@@ -341,7 +350,7 @@ export default async function OwnerPage() {
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Ready
                   </p>
-                  <p className={`mt-0.5 text-xl font-bold tabular-nums ${hasReadyForDelivery ? "text-emerald-700 dark:text-emerald-400" : ""}`}>
+                  <p className={`mt-0.5 stat-lg ${hasReadyForDelivery ? "text-emerald-700 dark:text-emerald-400" : ""}`}>
                     {insights.casesReadyForDeliveryCount}
                   </p>
                   <p className="text-xs text-muted-foreground">Ready for delivery</p>

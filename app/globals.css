@@ -1,25 +1,71 @@
 @import "tailwindcss";
 
+/* ── Design tokens — light mode ─────────────────────────────────────────── */
 :root {
-  --background: #f7f8f5;
-  --foreground: #17201b;
+  --background: #f5f6f3;
+  --foreground: #0f1a12;
   --card: #ffffff;
-  --card-foreground: #17201b;
-  --muted: #edf0ea;
-  --muted-foreground: #607065;
-  --border: #dce3da;
-  --input: #dce3da;
-  --primary: #0f6b5f;
+  --card-foreground: #0f1a12;
+  --muted: #eaede6;
+  --muted-foreground: #566359;
+  --border: #d8ddd5;
+  --input: #d8ddd5;
+  --primary: #0a5c51;
   --primary-foreground: #ffffff;
-  --secondary: #f0f6ff;
-  --secondary-foreground: #163c67;
-  --accent: #ffe8ba;
+  --secondary: #eef3ff;
+  --secondary-foreground: #1a3566;
+  --accent: #fff0c2;
   --accent-foreground: #5d3f07;
-  --destructive: #b42318;
-  --ring: #0f6b5f;
-  --radius: 0.5rem;
+  --destructive: #c0392b;
+  --ring: #0a5c51;
+  --radius: 0.625rem;
+
+  /* Premium palette extensions */
+  --glass-bg: rgba(255, 255, 255, 0.76);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-shadow: 0 4px 24px rgba(15, 26, 18, 0.08), 0 1px 3px rgba(15, 26, 18, 0.05);
+
+  /* Sidebar */
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #e4e8e0;
+  --sidebar-active-bg: rgba(10, 92, 81, 0.06);
+  --sidebar-active-text: #0a5c51;
+  --sidebar-active-border: #0a5c51;
 }
 
+/* ── Design tokens — dark mode ──────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b0e0c;
+    --foreground: #e6ebe3;
+    --card: #121712;
+    --card-foreground: #e6ebe3;
+    --muted: #1c221d;
+    --muted-foreground: #879b8a;
+    --border: #222922;
+    --input: #222922;
+    --primary: #2dd4a4;
+    --primary-foreground: #021a0f;
+    --secondary: #16203c;
+    --secondary-foreground: #8fb3f5;
+    --accent: #3a2d00;
+    --accent-foreground: #fbbf24;
+    --destructive: #f87171;
+    --ring: #2dd4a4;
+
+    --glass-bg: rgba(18, 23, 18, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3);
+
+    --sidebar-bg: #0b0e0c;
+    --sidebar-border: #1c221d;
+    --sidebar-active-bg: rgba(45, 212, 164, 0.08);
+    --sidebar-active-text: #2dd4a4;
+    --sidebar-active-border: #2dd4a4;
+  }
+}
+
+/* ── Tailwind custom theme mapping ──────────────────────────────────────── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -40,19 +86,31 @@
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
 }
 
+/* ── Base ───────────────────────────────────────────────────────────────── */
 * {
   border-color: var(--border);
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: optimizeLegibility;
 }
 
 body {
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.64), rgba(247, 248, 245, 0.92)),
-    var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI Variable Display",
+    "Segoe UI", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 button,
@@ -63,5 +121,188 @@ textarea {
 }
 
 ::selection {
-  background: rgba(15, 107, 95, 0.18);
+  background: rgba(10, 92, 81, 0.18);
+}
+
+/* ── Premium scrollbar ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+
+/* ── Animations ─────────────────────────────────────────────────────────── */
+@keyframes pulse-ring {
+  0%   { transform: scale(0.85); opacity: 0.9; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slide-in-up {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-slide-in-right { animation: slide-in-right 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.animate-slide-in-up    { animation: slide-in-up 0.18s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.animate-fade-in        { animation: fade-in 0.15s ease-out forwards; }
+
+/* ── Live pulse status dot ──────────────────────────────────────────────── */
+.live-dot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.live-dot::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+/* ── Glass card utility ─────────────────────────────────────────────────── */
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+
+/* ── Gradient text ──────────────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary) 0%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Stat numbers ───────────────────────────────────────────────────────── */
+.stat-xl {
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+}
+.stat-lg {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Mission card (technician) ──────────────────────────────────────────── */
+.mission-card {
+  border-radius: calc(var(--radius) + 4px);
+  border: 1px solid var(--border);
+  background: var(--card);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.mission-card:hover {
+  box-shadow: var(--glass-shadow);
+  transform: translateY(-1px);
+}
+.mission-card-overdue   { border-color: rgba(239, 68, 68, 0.45); }
+.mission-card-urgent    { border-color: rgba(245, 158, 11, 0.45); }
+.mission-card-top       { border-color: rgba(10, 92, 81, 0.35); box-shadow: 0 0 0 2px rgba(10, 92, 81, 0.08); }
+
+/* Urgent top-line — 1px gradient stripe at card top (from Lovable prototype) */
+.mission-card-urgent-line::before {
+  content: '';
+  position: absolute;
+  inset-x: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(245, 158, 11, 0.8) 50%, transparent 100%);
+  pointer-events: none;
+}
+
+/* ── Notification panel ─────────────────────────────────────────────────── */
+.notification-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 380px;
+  max-width: 100vw;
+  background: var(--card);
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+  overflow-y: auto;
+  animation: slide-in-right 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.notification-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 49;
+  animation: fade-in 0.15s ease-out;
+}
+
+/* ── AI panel ───────────────────────────────────────────────────────────── */
+.ai-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  z-index: 60;
+  animation: fade-in 0.15s ease-out;
+}
+
+.ai-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(680px, 92vw);
+  max-height: 72vh;
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 8px);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22), 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 61;
+  animation: slide-in-up 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Glow utilities (from Lovable prototype) ────────────────────────────── */
+.glow-primary {
+  box-shadow:
+    0 0 0 1px rgba(10, 92, 81, 0.25),
+    0 4px 16px -4px rgba(10, 92, 81, 0.45);
+}
+@media (prefers-color-scheme: dark) {
+  .glow-primary {
+    box-shadow:
+      0 0 0 1px rgba(45, 212, 164, 0.25),
+      0 4px 16px -4px rgba(45, 212, 164, 0.45);
+  }
+}
+
+/* ── Workflow gate (case lifecycle tracker) ─────────────────────────────── */
+.workflow-gate-done    { background: rgba(5, 150, 105, 0.15); color: #059669; ring: 1px solid rgba(5, 150, 105, 0.35); }
+.workflow-gate-pending { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+.workflow-gate-skip    { background: var(--muted); color: var(--muted-foreground); }
+
+/* ── Focus ring ─────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

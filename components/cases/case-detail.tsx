@@ -16,7 +16,8 @@ import { CaseDiscussion } from "@/components/comments/case-discussion";
 import { QualityControlForm } from "@/components/qc/qc-form";
 import { RemakeForm } from "@/components/qc/remake-form";
 import { CaseTimeline } from "@/components/timeline/case-timeline";
-import { stageLabels } from "@/lib/constants/workflow";
+import { ReadinessRing } from "@/components/ui/readiness-ring";
+import { stageLabels, stageOrder } from "@/lib/constants/workflow";
 import type { CaseDetail as CaseDetailData } from "@/lib/data/cases";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -162,6 +163,150 @@ function SideCardHeader({
         </div>
       </div>
     </CardHeader>
+  );
+}
+
+// ── Workflow gate helpers ──────────────────────────────────────────────────────
+
+function computeReadiness(item: CaseDetailData): number {
+  let score = 0;
+  // Files (35 pts)
+  if (item.missingInfoFields.length === 0) score += 35;
+  else score += Math.max(0, 35 - item.missingInfoFields.length * 10);
+  // Design (25 pts)
+  if (item.designVersions.length > 0) score += 25;
+  // QC (20 pts)
+  if (item.latestQualityCheck?.result === "passed") score += 20;
+  // Doctor approval (20 pts) — only if required
+  if (item.requiresDoctorApproval) {
+    const approvedDesign = item.designVersions.find((d: { approvalStatus: string | null }) => d.approvalStatus === "approved");
+    if (approvedDesign) score += 20;
+  } else {
+    score += 20;
+  }
+  return Math.min(100, score);
+}
+
+function GateRow({
+  label,
+  state,
+}: {
+  label: string;
+  state: "done" | "pending" | "idle" | "skip";
+}) {
+  if (state === "skip") return null;
+
+  return (
+    <div className="flex items-center gap-2.5 text-xs">
+      <span
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ring-1 ${
+          state === "done"
+            ? "bg-emerald-100 text-emerald-700 ring-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-400 dark:ring-emerald-800"
+            : state === "pending"
+            ? "bg-amber-100 text-amber-700 ring-amber-300 dark:bg-amber-950/40 dark:text-amber-400 dark:ring-amber-800"
+            : "bg-muted text-muted-foreground ring-border"
+        }`}
+      >
+        {state === "done" ? (
+          <CheckCircle2 className="size-3" />
+        ) : (
+          <span className="size-1.5 rounded-full bg-current" />
+        )}
+      </span>
+      <span className={state === "done" ? "text-foreground" : "text-muted-foreground"}>
+        {label}
+      </span>
+      {state === "pending" && (
+        <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 ring-1 ring-amber-300 dark:bg-amber-950/30 dark:text-amber-400 dark:ring-amber-800">
+          pending
+        </span>
+      )}
+    </div>
+  );
+}
+
+function WorkflowGatesPanel({ item }: { item: CaseDetailData }) {
+  const currentOrder = stageOrder[item.currentStage as keyof typeof stageOrder] ?? 0;
+  const isPast = (stage: string) => currentOrder > (stageOrder[stage as keyof typeof stageOrder] ?? 0);
+  const isCurrent = (stage: string) => item.currentStage === stage;
+
+  const filesOk = item.missingInfoFields.length === 0;
+  const hasDesign = item.designVersions.length > 0;
+  const designApproved = item.designVersions.some((d: { approvalStatus: string | null }) => d.approvalStatus === "approved");
+  const qcPassed = item.latestQualityCheck?.result === "passed";
+  const qcFailed = item.latestQualityCheck?.result === "failed";
+  const inProduction = isPast("doctor_approval") || isCurrent("milling_printing") || isPast("milling_printing");
+  const delivered = item.currentStage === "delivered" || item.currentStage === "completed";
+  const readyForDelivery = item.currentStage === "ready_for_delivery" || item.currentStage === "out_for_delivery" || delivered;
+
+  const readiness = computeReadiness(item);
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-semibold">Case progress</CardTitle>
+          <ReadinessRing value={readiness} size={52} />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <GateRow label="Received" state="done" />
+          <GateRow
+            label="Files complete"
+            state={filesOk ? "done" : item.missingInfoFields.length > 0 ? "pending" : "idle"}
+          />
+          <GateRow
+            label="CAD design"
+            state={hasDesign ? "done" : isPast("information_check") ? "pending" : "idle"}
+          />
+          <GateRow
+            label="Doctor approval"
+            state={
+              !item.requiresDoctorApproval
+                ? "skip"
+                : designApproved
+                ? "done"
+                : hasDesign
+                ? "pending"
+                : "idle"
+            }
+          />
+          <GateRow
+            label="Production"
+            state={
+              isPast("milling_printing")
+                ? "done"
+                : inProduction
+                ? "pending"
+                : "idle"
+            }
+          />
+          <GateRow
+            label="Quality control"
+            state={
+              qcPassed
+                ? "done"
+                : qcFailed
+                ? "pending"
+                : isPast("polishing")
+                ? "pending"
+                : "idle"
+            }
+          />
+          <GateRow
+            label="Delivery"
+            state={
+              delivered
+                ? "done"
+                : readyForDelivery
+                ? "pending"
+                : "idle"
+            }
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -341,6 +486,9 @@ export function CaseDetail({
 
         {/* Right sidebar — operational cards */}
         <div className="space-y-4">
+
+          {/* Workflow gates / case progress */}
+          <WorkflowGatesPanel item={item} />
 
           {/* Files */}
           <Card>

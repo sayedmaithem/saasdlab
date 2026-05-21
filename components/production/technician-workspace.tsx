@@ -65,121 +65,130 @@ function WorkspaceCase({
   }
 
   const isBlocked = card.delayRisk === "blocked" || card.missingInfoStatus !== "complete";
+  const isUrgentOrOverdue = card.delayRisk === "overdue" || card.isUrgent || card.delayRisk === "due_today" || isBlocked;
+  const missionClass = card.delayRisk === "overdue" || isBlocked
+    ? "mission-card mission-card-overdue"
+    : card.isUrgent || card.delayRisk === "due_today"
+    ? "mission-card mission-card-urgent"
+    : isTopPriority
+    ? "mission-card mission-card-top"
+    : "mission-card";
 
   return (
-    <article
-      className={`rounded-lg border bg-card p-4 ${
-        isTopPriority
-          ? "border-primary/40 ring-1 ring-primary/20"
-          : isBlocked
-          ? "border-red-300 dark:border-red-800"
-          : ""
-      }`}
-    >
+    <article className={`${missionClass} relative overflow-hidden p-4 sm:p-5 ${isUrgentOrOverdue ? "mission-card-urgent-line" : ""}`}>
+      {/* ── Mission header ── */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           {isTopPriority && (
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
-              Work on this next
+            <p className="mb-2 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary">
+              ▲ Work on this next
             </p>
           )}
           <div className="flex items-center gap-2 flex-wrap">
-            <a href={`/cases/${card.id}`} className="font-semibold hover:underline">
+            <a
+              href={`/cases/${card.id}`}
+              className="text-base font-bold hover:underline tracking-tight"
+            >
               {card.caseNumber}
             </a>
-            <a
-              href={`/cases/${card.id}/summary`}
-              className="inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              title="Print case sheet"
-            >
-              <FileText className="size-2.5" />
-              Sheet
-            </a>
+            {card.isUrgent && <Badge tone="red">Urgent</Badge>}
+            {isBlocked && <Badge tone="red">Blocked</Badge>}
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-[13px] text-muted-foreground">
             {card.doctorName} · {card.patientName}
           </p>
         </div>
-        <div className="flex flex-wrap gap-1.5 shrink-0">
-          {card.isUrgent ? <Badge tone="red">Urgent</Badge> : null}
-          {isBlocked ? <Badge tone="red">Blocked</Badge> : null}
+
+        <div className="flex flex-col items-end gap-1.5 shrink-0">
           <Badge tone={riskTone(card.delayRisk)}>
             {getDelayRiskLabel(card.delayRisk)}
           </Badge>
+          {card.dueDate && (
+            <span className={`flex items-center gap-1 text-[11px] font-medium ${
+              card.delayRisk === "overdue"
+                ? "text-red-600 dark:text-red-400"
+                : card.delayRisk === "due_today"
+                ? "text-amber-600 dark:text-amber-400"
+                : "text-muted-foreground"
+            }`}>
+              <Clock className="size-3" />
+              {card.dueDate}
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 text-sm md:grid-cols-4">
-        <p>
-          <span className="text-muted-foreground">Stage</span>
-          <span className="block font-medium">{stageLabels[card.currentStage]}</span>
-        </p>
-        <p>
-          <span className="text-muted-foreground">Work</span>
-          <span className="block font-medium">{card.workType}</span>
-        </p>
-        <p>
-          <span className="text-muted-foreground">Units</span>
-          <span className="block font-medium">{card.unitsCount}</span>
-        </p>
-        <p>
-          <span className="text-muted-foreground">Due</span>
-          <span
-            className={`block font-medium ${
-              card.delayRisk === "overdue" ? "text-red-600 dark:text-red-400" : ""
-            }`}
-          >
-            {card.dueDate ?? "Not set"}
-          </span>
-        </p>
+      {/* ── Case meta ── */}
+      <div className="mt-4 grid gap-2 text-[13px] grid-cols-2 sm:grid-cols-4">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Stage</p>
+          <p className="mt-0.5 font-semibold">{stageLabels[card.currentStage]}</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Work type</p>
+          <p className="mt-0.5 font-semibold">{card.workType}</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Units</p>
+          <p className="mt-0.5 font-semibold">{card.unitsCount}</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Material</p>
+          <p className="mt-0.5 font-semibold">{card.material ?? <span className="text-muted-foreground italic">Not set</span>}</p>
+        </div>
       </div>
 
+      {/* ── Blocker notice ── */}
       {isBlocked && card.missingInfoStatus !== "complete" && (
-        <div className="mt-3 rounded border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
-          Case is waiting for missing information before production can continue.
-          Contact lab management to release.
+        <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 px-3 py-2.5">
+          <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p className="text-[12px] text-amber-900 dark:text-amber-200 leading-snug">
+            Missing required information — production is paused. Contact lab management to release this case.
+          </p>
         </div>
       )}
 
+      {/* ── Action buttons ── */}
       {!isBlocked && (
-        <div className="mt-4 grid gap-2 md:grid-cols-3">
-          <form
-            action={(formData) => run(startStageAction, formData)}
-            className="flex gap-2"
-          >
+        <div className="mt-5 flex flex-wrap items-center gap-2 border-t pt-4">
+          <form action={(formData) => run(startStageAction, formData)}>
             <input type="hidden" name="caseId" value={card.id} />
-            <Button type="submit" variant="outline" size="sm" disabled={isPending} className="w-full">
+            <Button type="submit" size="sm" disabled={isPending} className="gap-1.5">
               <Play className="size-3.5" />
               Start work
             </Button>
           </form>
-          <form
-            action={(formData) => run(completeStageAction, formData)}
-            className="flex gap-2"
-          >
+
+          <form action={(formData) => run(completeStageAction, formData)} className="flex gap-2">
             <input type="hidden" name="caseId" value={card.id} />
-            {card.delayRisk === "overdue" ? (
+            {card.delayRisk === "overdue" && (
               <Input
                 name="delayReason"
                 placeholder="Delay reason (required)"
-                className="h-8 text-xs"
+                className="h-8 text-xs w-48"
               />
-            ) : null}
-            <Button type="submit" variant="outline" size="sm" disabled={isPending} className="w-full">
+            )}
+            <Button type="submit" variant="outline" size="sm" disabled={isPending} className="gap-1.5">
               <CheckCircle2 className="size-3.5" />
-              Complete
+              Complete stage
             </Button>
           </form>
-          <form
-            action={(formData) => run(addProductionProblemAction, formData)}
-            className="flex gap-2"
-          >
+
+          <form action={(formData) => run(addProductionProblemAction, formData)} className="flex gap-2 ml-auto">
             <input type="hidden" name="caseId" value={card.id} />
-            <Input name="problem" placeholder="Report a problem…" className="h-8 text-xs flex-1" />
-            <Button type="submit" variant="outline" size="sm" disabled={isPending}>
+            <Input name="problem" placeholder="Report a problem…" className="h-8 text-xs w-48" />
+            <Button type="submit" variant="outline" size="sm" disabled={isPending} title="Report problem">
               <Wrench className="size-3.5" />
             </Button>
           </form>
+
+          <a
+            href={`/cases/${card.id}/summary`}
+            className="ml-auto flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <FileText className="size-3" />
+            Case sheet
+          </a>
         </div>
       )}
     </article>
@@ -252,54 +261,49 @@ export function TechnicianWorkspace({
       ) : null}
 
       {/* ── KPI strip ──────────────────────────────────── */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="pt-4 pb-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Assigned to me
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/70">
+              Assigned
             </p>
-            <p className="mt-1 text-2xl font-bold tabular-nums">
-              {data.productivity.assignedCases}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">Active cases</p>
+            <p className="stat-lg mt-1">{data.productivity.assignedCases}</p>
+            <p className="text-[11px] text-muted-foreground mt-1">Active cases</p>
           </CardContent>
         </Card>
         <Card className={data.overdue > 0 ? "border-red-200 dark:border-red-900" : ""}>
           <CardContent className="pt-4 pb-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/70">
               Overdue
             </p>
-            <p className={`mt-1 text-2xl font-bold tabular-nums ${data.overdue > 0 ? "text-red-700 dark:text-red-400" : ""}`}>
+            <p className={`stat-lg mt-1 ${data.overdue > 0 ? "text-red-600 dark:text-red-400" : ""}`}>
               {data.overdue}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {data.overdue > 0 ? "Past due date — act now" : "All within schedule"}
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {data.overdue > 0 ? "Act now" : "On schedule"}
             </p>
           </CardContent>
         </Card>
         <Card className={data.dueToday > 0 ? "border-amber-200 dark:border-amber-900" : ""}>
           <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-1.5">
-              <Clock className="size-3.5 text-muted-foreground" />
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Due today
-              </p>
-            </div>
-            <p className={`mt-1 text-2xl font-bold tabular-nums ${data.dueToday > 0 ? "text-amber-700 dark:text-amber-400" : ""}`}>
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/70">
+              Due today
+            </p>
+            <p className={`stat-lg mt-1 ${data.dueToday > 0 ? "text-amber-600 dark:text-amber-400" : ""}`}>
               {data.dueToday}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">Must complete today</p>
+            <p className="text-[11px] text-muted-foreground mt-1">Complete today</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4 pb-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/70">
               QC pass rate
             </p>
-            <p className="mt-1 text-2xl font-bold tabular-nums">
+            <p className="stat-lg mt-1">
               {data.productivity.qcPassRate === null ? "—" : `${data.productivity.qcPassRate}%`}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-[11px] text-muted-foreground mt-1">
               {data.productivity.qcPassRate === null ? "No checks yet" : "Quality score"}
             </p>
           </CardContent>
