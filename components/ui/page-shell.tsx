@@ -31,7 +31,7 @@ export function PageShell({
   return (
     <div
       className={cn(
-        "space-y-8",
+        "space-y-8 animate-fade-in relative z-10",
         MAX_WIDTH_CLASSES[maxWidth],
         className,
       )}

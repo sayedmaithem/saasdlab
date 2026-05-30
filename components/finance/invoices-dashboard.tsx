@@ -59,10 +59,10 @@ export function InvoicesDashboard({
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card><CardHeader><CardTitle>Revenue month</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{formatMoney(summary.revenueThisMonth)}</CardContent></Card>
-        <Card><CardHeader><CardTitle>Total unpaid</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{formatMoney(summary.totalUnpaid)}</CardContent></Card>
-        <Card><CardHeader><CardTitle>Overdue</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{summary.overdueInvoices}</CardContent></Card>
-        <Card><CardHeader><CardTitle>Payments month</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{formatMoney(summary.paymentsThisMonth)}</CardContent></Card>
+        <Card><CardHeader><CardTitle>Revenue month</CardTitle></CardHeader><CardContent className="text-2xl font-semibold tabular-nums" data-price="">{formatMoney(summary.revenueThisMonth)}</CardContent></Card>
+        <Card><CardHeader><CardTitle>Total unpaid</CardTitle></CardHeader><CardContent className="text-2xl font-semibold tabular-nums" data-price="">{formatMoney(summary.totalUnpaid)}</CardContent></Card>
+        <Card><CardHeader><CardTitle>Overdue</CardTitle></CardHeader><CardContent className="text-2xl font-semibold tabular-nums" data-count="">{summary.overdueInvoices}</CardContent></Card>
+        <Card><CardHeader><CardTitle>Payments month</CardTitle></CardHeader><CardContent className="text-2xl font-semibold tabular-nums" data-price="">{formatMoney(summary.paymentsThisMonth)}</CardContent></Card>
       </div>
 
       {showCreate ? (
@@ -123,9 +123,9 @@ export function InvoicesDashboard({
                   <td className="py-3">{invoice.caseNumber ?? "-"}</td>
                   <td className="py-3">{invoice.issueDate ?? "-"}</td>
                   <td className="py-3">{invoice.dueDate ?? "-"}</td>
-                  <td className="py-3">{formatMoney(invoice.total)}</td>
-                  <td className="py-3">{formatMoney(invoice.paidAmount)}</td>
-                  <td className="py-3">{formatMoney(invoice.remainingBalance)}</td>
+                  <td className="py-3 tabular-nums">{formatMoney(invoice.total)}</td>
+                  <td className="py-3 tabular-nums">{formatMoney(invoice.paidAmount)}</td>
+                  <td className="py-3 tabular-nums">{formatMoney(invoice.remainingBalance)}</td>
                   <td className="py-3"><Badge tone={statusTone(invoice.status)}>{invoice.status.replaceAll("_", " ")}</Badge></td>
                 </tr>
               ))}

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Activity } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -6,6 +8,7 @@ import { roleLabels } from "@/lib/constants/roles";
 import type { AppRole } from "@/lib/constants/roles";
 import { hasRole } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 type CloudStatus = "connected" | "preview" | "offline";
 
@@ -22,23 +25,21 @@ const cloudDotTitle: Record<CloudStatus, string> = {
 };
 
 const GROUP_ORDER: NavGroup[] = [
-  "command",
-  "lab-ops",
+  "workspace",
   "finance",
   "logistics",
-  "admin",
-  "portals",
+  "system",
 ];
 
 const ROLE_COLOR: Partial<Record<AppRole, string>> = {
-  lab_owner:   "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
-  lab_manager: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-  technician:  "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300",
-  accountant:  "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-  reception:   "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  delivery:    "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
-  super_admin: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
-  doctor:      "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300",
+  lab_owner:   "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
+  lab_manager: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
+  technician:  "bg-violet-500/20 text-violet-400 border border-violet-500/30",
+  accountant:  "bg-amber-500/20 text-amber-400 border border-amber-500/30",
+  reception:   "bg-slate-500/20 text-slate-300 border border-slate-500/30",
+  delivery:    "bg-orange-500/20 text-orange-400 border border-orange-500/30",
+  super_admin: "bg-red-500/20 text-red-400 border border-red-500/30",
+  doctor:      "bg-sky-500/20 text-sky-400 border border-sky-500/30",
 };
 
 export function AppSidebar({
@@ -64,47 +65,39 @@ export function AppSidebar({
   );
 
   const primaryRole = roles[0] ?? "reception";
-  const rolePill = ROLE_COLOR[primaryRole as AppRole] ?? "bg-muted text-muted-foreground";
+  const rolePill = ROLE_COLOR[primaryRole as AppRole] ?? "bg-white/10 text-slate-300";
 
   return (
-    <aside
-      className="fixed inset-y-0 start-0 hidden w-[220px] border-e lg:flex flex-col"
-      style={{ background: "var(--sidebar-bg)", borderColor: "var(--sidebar-border)" }}
-    >
+    <aside className="fixed inset-y-0 start-0 hidden w-[260px] lg:flex flex-col z-40 border-r border-white/5 spatial-glass backdrop-blur-2xl shadow-[4px_0_24px_rgba(0,0,0,0.5)]">
       {/* ── Brand ── */}
-      <div className="flex h-[60px] items-center gap-2.5 px-4">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm glow-primary">
-          <Activity className="size-4" aria-hidden="true" />
+      <div className="flex h-[72px] items-center gap-3 px-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 opacity-50" />
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-sky-400 to-indigo-600 text-white shadow-lg spatial-glow-cyan relative z-10">
+          <Activity className="size-5 animate-pulse" aria-hidden="true" />
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-bold tracking-tight leading-none gradient-text">LabFlow</p>
-          <p className="text-[9px] text-muted-foreground/60 mt-0.5 leading-none uppercase tracking-widest font-semibold">Dental OS</p>
+        <div className="min-w-0 flex-1 relative z-10">
+          <p className="text-[15px] font-extrabold tracking-tight leading-none text-white drop-shadow-md">LabFlow</p>
+          <p className="text-[9px] text-sky-300 mt-1 leading-none uppercase tracking-[0.2em] font-bold">Dental OS</p>
         </div>
-        <span
-          className={cn(
-            "live-dot size-2 shrink-0 rounded-full",
-            cloudDotClass[cloudStatus],
-          )}
-          title={cloudDotTitle[cloudStatus]}
-          aria-label={cloudDotTitle[cloudStatus]}
-          style={{ color: cloudStatus === "connected" ? "#10b981" : cloudStatus === "preview" ? "#f59e0b" : "#ef4444" }}
-        />
       </div>
 
-      <Separator />
-
       {/* ── Navigation ── */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
-        {GROUP_ORDER.map((group) => {
+      <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-6 scrollbar-hide relative z-10">
+        {GROUP_ORDER.map((group, groupIndex) => {
           const items = groupedItems[group];
           if (!items) return null;
 
           return (
-            <div key={group}>
-              <p className="mb-1.5 px-2 text-[9px] font-bold uppercase tracking-[0.14em] text-muted-foreground/40">
+            <motion.div 
+              key={group}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: groupIndex * 0.1, duration: 0.5, type: "spring" }}
+            >
+              <p className="mb-2.5 px-3 text-[10px] font-black uppercase tracking-[0.18em] text-white/40 drop-shadow-sm">
                 {navGroupLabels[group]}
               </p>
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 {items.map((item) => {
                   const active =
                     activeHref === item.href ||
@@ -115,80 +108,63 @@ export function AppSidebar({
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "group flex h-8 items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium transition-all duration-100",
-                        "relative",
+                        "group relative flex h-10 items-center gap-3 rounded-xl px-3 text-[13px] font-medium transition-all duration-300 overflow-hidden",
                         active
-                          ? "text-[var(--sidebar-active-text)]"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+                          ? "text-white shadow-md shadow-black/20"
+                          : "text-slate-400 hover:text-white hover:bg-white/5",
                       )}
-                      style={
-                        active
-                          ? { background: "var(--sidebar-active-bg)" }
-                          : undefined
-                      }
                     >
-                      {/* Active left border accent — gradient stripe */}
+                      {/* Active Background */}
                       {active && (
-                        <span
-                          className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full"
-                          style={{
-                            background: "linear-gradient(180deg, var(--sidebar-active-border) 0%, transparent 100%)",
-                          }}
+                        <motion.div
+                          layoutId="sidebar-active"
+                          className="absolute inset-0 bg-gradient-to-r from-indigo-500/40 to-purple-500/20 border border-white/10"
+                          initial={false}
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                         />
                       )}
+                      
                       <item.icon
                         className={cn(
-                          "size-[15px] shrink-0 transition-colors",
-                          active ? "text-[var(--sidebar-active-text)]" : "text-muted-foreground/60 group-hover:text-foreground",
+                          "size-[18px] shrink-0 transition-all duration-300 relative z-10",
+                          active ? "text-sky-300 drop-shadow-[0_0_8px_rgba(56,189,248,0.8)]" : "text-slate-500 group-hover:text-sky-200",
                         )}
                         aria-hidden
                       />
-                      <span className="truncate">{item.label}</span>
+                      <span className="truncate relative z-10 font-semibold tracking-wide">{item.label}</span>
 
-                      {/* Active dot indicator on right */}
+                      {/* Active glowing dot */}
                       {active && (
-                        <span
-                          className="ml-auto size-1.5 rounded-full shrink-0"
-                          style={{ background: "var(--sidebar-active-border)" }}
+                        <motion.span
+                          layoutId="sidebar-dot"
+                          className="absolute right-3 size-1.5 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,1)]"
                         />
                       )}
                     </Link>
                   );
                 })}
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </nav>
 
-      {/* ── User footer — premium card ── */}
-      <div
-        className="border-t px-3 py-3"
-        style={{ borderColor: "var(--sidebar-border)" }}
-      >
-        <div className="rounded-lg px-2.5 py-2.5 space-y-2 hover:bg-muted/40 transition-colors cursor-default">
-          <div className="flex items-center gap-2.5">
-            {/* Avatar with role color ring */}
-            <div
-              className={cn(
-                "size-7 shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold uppercase",
-                rolePill,
-              )}
-            >
-              {labName.charAt(0)}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-semibold truncate leading-tight">{labName}</p>
-              <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold mt-0.5">
-                {roleLabels[primaryRole as AppRole] ?? primaryRole.replaceAll("_", " ")}
-              </p>
-            </div>
-            {/* Cloud status dot */}
-            <span
-              className={cn("size-1.5 rounded-full shrink-0", cloudDotClass[cloudStatus])}
-              title={cloudDotTitle[cloudStatus]}
-            />
+      {/* ── User Footer ── */}
+      <div className="p-4 relative z-10 border-t border-white/5 bg-black/20 backdrop-blur-md">
+        <div className="rounded-xl px-3 py-3 glass-card border border-white/5 hover:border-white/20 transition-colors cursor-pointer flex items-center gap-3">
+          <div className={cn("size-9 shrink-0 rounded-xl flex items-center justify-center text-[13px] shadow-inner", rolePill)}>
+            {labName.charAt(0)}
           </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-bold text-white truncate drop-shadow-sm">{labName}</p>
+            <p className="text-[10px] text-sky-200/80 uppercase tracking-widest font-bold mt-0.5">
+              {roleLabels[primaryRole as AppRole] ?? primaryRole.replaceAll("_", " ")}
+            </p>
+          </div>
+          <span
+            className={cn("size-2 rounded-full shadow-[0_0_8px_currentColor]", cloudDotClass[cloudStatus])}
+            title={cloudDotTitle[cloudStatus]}
+          />
         </div>
       </div>
     </aside>

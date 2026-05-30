@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { getCurrentSessionContext } from "@/lib/auth/session";
 import type { AppRole } from "@/lib/constants/roles";
+import { hasSupabaseEnv } from "@/lib/env";
+import { SpatialCockpitWrapper } from "./spatial-cockpit-wrapper";
 
 const portalByRole: Record<AppRole, string> = {
   super_admin: "/command-center",
@@ -18,9 +20,11 @@ const portalByRole: Record<AppRole, string> = {
 export default async function HomePage() {
   const session = await getCurrentSessionContext();
 
-  if (!session) {
-    redirect("/auth");
+  if (session) {
+    redirect(portalByRole[session.role] ?? "/dashboard");
   }
 
-  redirect(portalByRole[session.role] ?? "/dashboard");
+  const supabaseReady = hasSupabaseEnv();
+
+  return <SpatialCockpitWrapper supabaseReady={supabaseReady} />;
 }

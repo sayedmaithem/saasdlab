@@ -36,9 +36,9 @@ export function PaymentsDashboard({
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardHeader><CardTitle>Payments month</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{formatMoney(summary.paymentsThisMonth)}</CardContent></Card>
-        <Card><CardHeader><CardTitle>Total unpaid</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{formatMoney(summary.totalUnpaid)}</CardContent></Card>
-        <Card><CardHeader><CardTitle>Overdue invoices</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{summary.overdueInvoices}</CardContent></Card>
+        <Card><CardHeader><CardTitle>Payments month</CardTitle></CardHeader><CardContent className="text-2xl font-semibold tabular-nums" data-price="">{formatMoney(summary.paymentsThisMonth)}</CardContent></Card>
+        <Card><CardHeader><CardTitle>Total unpaid</CardTitle></CardHeader><CardContent className="text-2xl font-semibold tabular-nums" data-price="">{formatMoney(summary.totalUnpaid)}</CardContent></Card>
+        <Card><CardHeader><CardTitle>Overdue invoices</CardTitle></CardHeader><CardContent className="text-2xl font-semibold tabular-nums" data-count="">{summary.overdueInvoices}</CardContent></Card>
       </div>
 
       <Card>

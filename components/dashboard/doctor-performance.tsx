@@ -27,8 +27,8 @@ export function DoctorPerformance({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold">{doctor.doctorName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {doctor.activeCases} active cases
+                  <p className="text-sm text-muted-foreground tabular-nums">
+                    <span data-count="">{doctor.activeCases}</span> active cases
                   </p>
                 </div>
                 <Badge
@@ -46,11 +46,11 @@ export function DoctorPerformance({
               <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <p className="text-muted-foreground">Approval rate</p>
-                  <p className="font-semibold">{doctor.approvalRate}%</p>
+                  <p className="font-semibold tabular-nums">{doctor.approvalRate}%</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Remake rate</p>
-                  <p className="font-semibold">{doctor.remakeRate}%</p>
+                  <p className="font-semibold tabular-nums">{doctor.remakeRate}%</p>
                 </div>
               </div>
             </div>

@@ -1,9 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { DoctorPortalData } from "@/lib/data/doctor-portal";
+import { motion } from "framer-motion";
+import { ArrowRight, Plus, Search, FileText } from "lucide-react";
 
 // Human-readable labels for internal stage/status identifiers
 const STAGE_LABELS: Record<string, string> = {
@@ -35,15 +37,13 @@ function statusLabel(status: string) {
 // ── Not-linked placeholder ─────────────────────────────────────────────────
 function NotLinked() {
   return (
-    <Card>
-      <CardContent className="py-12 text-center space-y-3">
-        <p className="text-base font-medium text-foreground">Portal account not linked</p>
-        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-          Your login is not yet associated with a doctor profile. Ask your lab administrator to
-          link your account from the doctor edit page.
-        </p>
-      </CardContent>
-    </Card>
+    <div className="glass rounded-2xl py-16 text-center space-y-4">
+      <p className="text-xl font-bold text-foreground">Portal account not linked</p>
+      <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+        Your login is not yet associated with a doctor profile. Ask your lab administrator to
+        link your account from the doctor edit page.
+      </p>
+    </div>
   );
 }
 
@@ -52,100 +52,152 @@ export function DoctorPortalDashboard({ data }: { data: DoctorPortalData }) {
   if (!data.doctorId) return <NotLinked />;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header row */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">Doctor portal</p>
-          <h1 className="text-2xl font-semibold">{data.doctorName}</h1>
+          <p className="text-sm font-semibold tracking-wide text-primary uppercase">Doctor portal</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gradient mt-1">{data.doctorName}</h1>
         </div>
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link href="/doctor-portal/statement">Statement</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/doctor-portal/cases/new">New case</Link>
-          </Button>
+        <div className="flex gap-3">
+          <Link 
+            href="/doctor-portal/statement"
+            className="inline-flex items-center gap-2 rounded-lg bg-background/50 border border-border px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-all hover:bg-muted/50 hover:border-primary/50"
+          >
+            <FileText className="h-4 w-4 text-primary" />
+            Statement
+          </Link>
+          <Link 
+            href="/doctor-portal/cases/new"
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:opacity-90 glow-primary"
+          >
+            <Plus className="h-4 w-4" />
+            New case
+          </Link>
         </div>
       </div>
 
       {/* Summary cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <motion.div 
+        className="grid gap-4 md:grid-cols-4"
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: { opacity: 0 },
+          visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+        }}
+      >
         {data.cards.map((card) => (
-          <Card key={card.label}>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+          <motion.div 
+            key={card.label}
+            variants={{
+              hidden: { opacity: 0, y: 15 },
+              visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 80, damping: 15 } }
+            }}
+            className="glass rounded-2xl p-5 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 hover:glow-primary"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative z-10">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 mb-3">
                 {card.label}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-semibold">{card.value}</p>
-              <p className="text-xs text-muted-foreground">{card.hint}</p>
-            </CardContent>
-          </Card>
+              </p>
+              <p className="text-4xl font-bold tracking-tighter text-foreground mb-1">{card.value}</p>
+              <p className="text-xs font-medium text-muted-foreground">{card.hint}</p>
+            </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Cases list */}
-      <Card>
-        <CardHeader>
-          <CardTitle>My cases</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form className="mb-4 grid gap-3 md:grid-cols-[1fr_auto]">
-            <Input name="query" placeholder="Search patient or case number" />
-            <Button type="submit" variant="outline">
-              Search
-            </Button>
+      <div className="glass rounded-2xl overflow-hidden mt-8">
+        <div className="p-6 border-b border-border/50 flex flex-wrap items-center justify-between gap-4 bg-background/30">
+          <h2 className="text-xl font-bold">My cases</h2>
+          <form className="flex items-center w-full md:w-auto relative">
+            <Search className="h-4 w-4 absolute left-3 text-muted-foreground pointer-events-none" />
+            <Input 
+              name="query" 
+              placeholder="Search patient or case..." 
+              className="pl-9 h-9 w-full md:w-[260px] rounded-lg border-border bg-background/50 focus-visible:ring-primary"
+            />
+            <button type="submit" className="hidden">Submit</button>
           </form>
-
-          <div className="space-y-2">
-            {data.cases.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">
-                No cases yet.{" "}
-                <Link
-                  href="/doctor-portal/cases/new"
-                  className="text-primary hover:underline font-medium"
-                >
-                  Submit your first case →
-                </Link>
-              </p>
-            ) : (
-              data.cases.map((item) => (
-                <Link
+        </div>
+        
+        <div className="p-2">
+          {data.cases.length === 0 ? (
+            <div className="py-16 text-center space-y-3">
+              <p className="text-sm font-medium text-muted-foreground">No cases yet.</p>
+              <Link
+                href="/doctor-portal/cases/new"
+                className="inline-flex items-center gap-1 text-sm text-primary hover:underline font-semibold"
+              >
+                Submit your first case <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+          ) : (
+            <motion.div 
+              className="space-y-1"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+              }}
+            >
+              {data.cases.map((item) => (
+                <motion.div
                   key={item.id}
-                  href={`/doctor-portal/cases/${item.id}`}
-                  className="block rounded-lg border bg-background p-4 hover:bg-muted transition-colors"
+                  variants={{
+                    hidden: { opacity: 0, x: -10 },
+                    visible: { opacity: 1, x: 0, transition: { type: "spring", bounce: 0, duration: 0.4 } }
+                  }}
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
+                  <Link
+                    href={`/doctor-portal/cases/${item.id}`}
+                    className="flex flex-wrap items-center justify-between gap-4 rounded-xl p-4 hover:bg-white/[0.04] transition-colors group"
+                  >
                     <div className="min-w-0">
-                      <p className="font-semibold truncate">
-                        {item.caseNumber} — {item.patientName}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {item.workType}
-                        {item.dueDate ? ` · Due ${item.dueDate}` : ""}
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-sm font-semibold text-primary">{item.caseNumber}</span>
+                        <span className="font-semibold text-foreground truncate">{item.patientName}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-2">
+                        <span>{item.workType}</span>
+                        {item.dueDate && (
+                          <>
+                            <span className="h-1 w-1 rounded-full bg-border" />
+                            <span className={new Date(item.dueDate) < new Date() ? "text-destructive font-semibold" : ""}>
+                              Due {item.dueDate}
+                            </span>
+                          </>
+                        )}
                       </p>
                     </div>
-                    <div className="flex shrink-0 flex-wrap gap-2">
-                      {item.missingInfoStatus === "missing" && (
-                        <Badge tone="amber">Missing info</Badge>
-                      )}
-                      {item.currentStage === "doctor_approval" && (
-                        <Badge tone="red">Approval needed</Badge>
-                      )}
-                      <Badge tone="blue">{stageLabel(item.currentStage)}</Badge>
-                      {item.status !== "active" && (
-                        <Badge tone="neutral">{statusLabel(item.status)}</Badge>
-                      )}
+                    
+                    <div className="flex shrink-0 items-center gap-3">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        {item.missingInfoStatus === "missing" && (
+                          <Badge tone="amber" className="rounded-md px-2 py-0.5 text-[10px]">Missing info</Badge>
+                        )}
+                        {item.currentStage === "doctor_approval" && (
+                          <Badge tone="red" className="rounded-md px-2 py-0.5 text-[10px] glow-primary border-destructive/30">Approval needed</Badge>
+                        )}
+                        <Badge tone="blue" className="rounded-md px-2 py-0.5 text-[10px]">{stageLabel(item.currentStage)}</Badge>
+                        {item.status !== "active" && (
+                          <Badge tone="neutral" className="rounded-md px-2 py-0.5 text-[10px]">{statusLabel(item.status)}</Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-center h-8 w-8 rounded-full bg-transparent group-hover:bg-white/10 transition-colors text-muted-foreground group-hover:text-primary">
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

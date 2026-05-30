@@ -1,24 +1,17 @@
-export const dynamic = "force-dynamic";
+import { DeliveryTracker } from "@/components/delivery/delivery-tracker";
 
-import { AppShell } from "@/components/layout/app-shell";
-import { DeliveryDashboard } from "@/components/delivery/delivery-dashboard";
-import { requireRouteAccess } from "@/lib/auth/guards";
-import { getDeliveryData } from "@/lib/data/delivery";
+export const metadata = {
+  title: "Delivery Management | LabFlow",
+};
 
-export default async function DeliveryPage() {
-  const session = await requireRouteAccess("/delivery");
-  const data = await getDeliveryData(session);
-
+export default function DeliveryPage() {
   return (
-    <AppShell
-      labName={session.labName ?? "LabFlow"}
-      session={session}
-      activeHref="/delivery"
-      eyebrow="Lab Operations"
-      title="Delivery Queue"
-      cloudStatus="connected"
-    >
-      <DeliveryDashboard items={data.items} deliveryPeople={data.deliveryPeople} />
-    </AppShell>
+    <div className="w-full h-full min-h-[80vh] flex flex-col items-center justify-center p-4 md:p-8 animate-fade-in">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-foreground font-sans gradient-text">Delivery & Logistics</h1>
+        <p className="text-muted-foreground mt-2 text-sm uppercase tracking-widest font-semibold">Active Fleet Tracking</p>
+      </div>
+      <DeliveryTracker />
+    </div>
   );
 }

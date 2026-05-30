@@ -17,6 +17,7 @@ import { QualityControlForm } from "@/components/qc/qc-form";
 import { RemakeForm } from "@/components/qc/remake-form";
 import { CaseTimeline } from "@/components/timeline/case-timeline";
 import { ReadinessRing } from "@/components/ui/readiness-ring";
+import { AICheckerWrapper } from "@/components/cases/ai-checker-wrapper";
 import { stageLabels, stageOrder } from "@/lib/constants/workflow";
 import type { CaseDetail as CaseDetailData } from "@/lib/data/cases";
 
@@ -416,12 +417,15 @@ export function CaseDetail({
           ) : (
             <p className="text-sm text-muted-foreground">No due date</p>
           )}
-          <Button asChild variant="outline" size="sm">
-            <a href={`/cases/${item.id}/summary`}>
-              <Printer className="size-3.5" />
-              Print summary
-            </a>
-          </Button>
+          <div className="flex items-center gap-2 relative">
+            <Button asChild variant="outline" size="sm">
+              <a href={`/cases/${item.id}/summary`}>
+                <Printer className="size-3.5" />
+                Print summary
+              </a>
+            </Button>
+            <AICheckerWrapper caseNotes={item.notes ?? ""} workType={item.workType} />
+          </div>
         </div>
       </div>
 

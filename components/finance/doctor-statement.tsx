@@ -20,8 +20,8 @@ export function DoctorStatement({
         <h1 className="text-2xl font-semibold">{doctorName}</h1>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
-        <Card><CardHeader><CardTitle>Opening balance</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{formatMoney(0)}</CardContent></Card>
-        <Card><CardHeader><CardTitle>Remaining balance</CardTitle></CardHeader><CardContent className="text-2xl font-semibold">{formatMoney(remainingBalance)}</CardContent></Card>
+        <Card><CardHeader><CardTitle>Opening balance</CardTitle></CardHeader><CardContent className="text-2xl font-semibold tabular-nums" data-price="">{formatMoney(0)}</CardContent></Card>
+        <Card><CardHeader><CardTitle>Remaining balance</CardTitle></CardHeader><CardContent className="text-2xl font-semibold tabular-nums" data-price="">{formatMoney(remainingBalance)}</CardContent></Card>
         <Card><CardHeader><CardTitle>Print/export</CardTitle></CardHeader><CardContent><Button variant="outline" disabled>PDF soon</Button></CardContent></Card>
       </div>
       <Card>
@@ -47,9 +47,9 @@ export function DoctorStatement({
                   <td className="py-3">{row.date}</td>
                   <td>{row.type}</td>
                   <td>{row.reference}</td>
-                  <td>{row.debit ? formatMoney(row.debit) : "-"}</td>
-                  <td>{row.credit ? formatMoney(row.credit) : "-"}</td>
-                  <td className="font-semibold">{formatMoney(row.balance)}</td>
+                  <td className="tabular-nums">{row.debit ? formatMoney(row.debit) : "-"}</td>
+                  <td className="tabular-nums">{row.credit ? formatMoney(row.credit) : "-"}</td>
+                  <td className="font-semibold tabular-nums">{formatMoney(row.balance)}</td>
                   <td>{row.notes ?? "-"}</td>
                 </tr>
               ))}

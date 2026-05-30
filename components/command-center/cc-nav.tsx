@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 const CC_TABS = [
   { label: "Overview", href: "/command-center" },
@@ -24,7 +25,7 @@ export function CcNav() {
 
   return (
     <nav
-      className="flex gap-1 overflow-x-auto rounded-lg border bg-muted/40 p-1"
+      className="glass-card flex gap-1 overflow-x-auto rounded-xl p-1.5 scrollbar-hide shadow-sm"
       aria-label="Command Center navigation"
     >
       {CC_TABS.map((tab) => {
@@ -38,14 +39,22 @@ export function CcNav() {
             key={tab.href}
             href={tab.href}
             className={cn(
-              "shrink-0 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              "relative shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-300",
               isActive
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
+                ? "text-emerald-900 dark:text-emerald-100"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
             )}
             aria-current={isActive ? "page" : undefined}
           >
-            {tab.label}
+            {isActive && (
+              <motion.div
+                layoutId="cc-nav-active-tab"
+                className="absolute inset-0 rounded-lg bg-emerald-500/10 border border-emerald-500/20 shadow-sm"
+                initial={false}
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
+            <span className="relative z-10">{tab.label}</span>
           </Link>
         );
       })}

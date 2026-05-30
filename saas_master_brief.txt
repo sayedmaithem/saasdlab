@@ -1,0 +1,1175 @@
+# AI-Ready SaaS Master Brief
+
+## 1. ملخص النظام
+
+النظام هو **Dental Lab Operating System** لإدارة مختبرات ومراكز الأسنان بطريقة حديثة، عملية، وسهلة للكادر اليومي. جوهره ليس محاسبة فقط، ولا مستودع فقط، ولا CRM فقط؛ بل نظام تشغيل موحّد يربط **الحالات والطلبات، مراحل العمل، الملفات، الفواتير، الدفعات، المستودع، الموظفين، التقارير، التنبيهات، وبوابة الطبيب** حول كائن مركزي واحد: **Case / Order**.
+
+المشروع يبدأ كنظام داخلي لمختبر ODENT / مختبر المؤسس، ثم يتحول إلى SaaS لمختبرات الأسنان، ثم يتوسع لاحقًا إلى Dental Ecosystem يربط المختبرات بالأطباء والعيادات والموردين وشركات الأجهزة والمواد.
+
+النظام يجب أن يحل مشكلة البرامج القديمة: كثرة القوائم، صعوبة الاستخدام، ضعف التتبع، تكرار الإدخال، ضياع الملفات، عدم وضوح الفواتير، تأخر التسليم، وضعف التواصل بين الطبيب والمختبر.
+
+---
+
+## 2. الهدف من النظام
+
+هدف النظام هو جعل المختبر يعمل كعملية منظمة يمكن التحكم بها وقياسها:
+
+- كل Case معروف مكانها، حالتها، من المسؤول عنها، وما الخطوة التالية.
+- كل فاتورة مرتبطة بحالة وعميل وطبيب/عيادة.
+- كل دفعة واضحة ومربوطة بحساب العميل.
+- كل مادة تدخل أو تخرج من المستودع لها سجل حركة.
+- كل موظف يرى عمله فقط بدون ازدحام.
+- كل مدير يرى المختبر من Dashboard واضح، بدون الحاجة للسؤال المستمر.
+- كل طبيب/عيادة يحصل على تجربة أكثر وضوحًا واحترافية.
+
+الهدف ليس بناء ERP ضخم ومعقد، بل بناء **Operational SaaS** سريع، واضح، قابل للتوسع، ومصمم لواقع مختبر الأسنان.
+
+---
+
+## 3. الفلسفة العامة للنظام
+
+النظام يجب أن يكون:
+
+- **بسيط:** لا يفتح للمستخدم عشرات الشاشات غير الضرورية.
+- **سريع:** أي موظف يعرف أين يضغط وما الخطوة التالية.
+- **واضح:** كل حالة، فاتورة، دفعة، مادة، وتنبيه لها معنى وسياق.
+- **غير معقد:** المحاسبة والمستودع والإدارة تكون عملية، لا ERP ثقيل.
+- **عملي:** يخدم الاستقبال، الفني، المحاسب، المخزن، التوصيل، الطبيب، والإدارة.
+- **Role-Based:** كل دور يرى ما يحتاجه فقط.
+- **Case-Centric:** كل شيء مهم يرجع إلى Case أو عميل أو مادة أو موظف.
+- **قابل للتوسع:** يبدأ لمختبر واحد، ثم يدعم عدة مختبرات واشتراكات SaaS.
+- **أفضل من النظام القديم:** ليس عبر نسخ قوائمه، بل عبر إعادة هندستها إلى workflows مفهومة.
+
+قاعدة مهمة: **إذا كانت الميزة لا تقلل ضياع، تأخير، خطأ، تكرار إدخال، أو غموض مالي/تشغيلي، فهي ليست أولوية.**
+
+---
+
+## 4. التقسيم الاحترافي الجديد للنظام
+
+### A. قسم الحالات والطلبات — Cases & Orders
+
+هذا هو قلب النظام. كل طلب مختبري يجب أن يبدأ كـ Case منظمة تحتوي على البيانات السريرية، المالية، الملفات، المراحل، المسؤوليات، والتنبيهات.
+
+#### الوظائف الأساسية
+
+- إنشاء Case جديدة.
+- البحث السريع عن Case برقم الحالة، الطبيب، العيادة، المريض، التاريخ، الفاتورة، الباركود.
+- تعديل الطلبية حسب الصلاحية.
+- تعديل فاتورة الحالة حسب الصلاحية.
+- عرض الطلبيات واجبة التسليم: اليوم، غدًا، هذا الأسبوع، المتأخرة.
+- كشف حركة الحالات: متى دخلت، متى تحولت، من نقلها، متى خرجت، ومتى سُلمت.
+- تتبع مراحل العمل: Intake, Design, Production, Coloring/Finishing, QC, Delivery.
+- حالة الطلب الحالية مع next action واضح.
+- سجل تغييرات الحالة.
+- ملاحظات الطبيب/العيادة وملاحظات داخلية.
+- مرفقات الحالة: سكان، صور، ملفات تصميم، ملفات نهائية، مستندات.
+- أولوية الحالة: Normal, Urgent, Critical.
+- تاريخ الاستلام، تاريخ التسليم المتوقع، تاريخ التسليم الفعلي.
+- تنبيهات التأخير والنواقص.
+- ربط الحالة بالفاتورة، العميل، العيادة، الطبيب، والمستخدمين المسؤولين.
+
+#### تحسينات احترافية
+
+- **Case Cockpit:** صفحة واحدة تعرض كل ما يخص الحالة.
+- **Case Timeline:** خط زمني لكل حركة.
+- **Readiness Score:** هل الحالة جاهزة للتصميم/الإنتاج/QC/التوصيل؟
+- **Missing Requirements:** قائمة نواقص منظمة بدل ملاحظات عشوائية.
+- **Case Blockers:** مانع واضح مثل نقص ملف، انتظار طبيب، مشكلة إنتاج، فشل QC، أو مشكلة مالية.
+- **Barcode Tracking:** كل Case لها QR/Barcode يفتح صفحة الحالة.
+- **Saved Views:** مثل “متأخرة”، “تحتاج موافقة”، “جاهزة للتوصيل”، “ناقص ملفات”.
+
+---
+
+### B. قسم المحاسبة — Accounting
+
+المحاسبة يجب أن تكون بسيطة ودقيقة ومربوطة بالحالات، لا ERP ضخم.
+
+#### التقسيم العملي
+
+1. **حسابات العملاء**
+   - رصيد كل طبيب/عيادة.
+   - إجمالي الفواتير.
+   - إجمالي المدفوع.
+   - المتبقي.
+   - آخر دفعة.
+   - الحالات المفتوحة والمسلمة وغير المدفوعة.
+
+2. **دفعات العملاء**
+   - تسجيل دفعة.
+   - ربط الدفعة بفاتورة محددة أو حساب العميل كرصيد.
+   - طريقة الدفع.
+   - ملاحظات.
+   - إيصال دفع.
+
+3. **الفواتير**
+   - فاتورة مرتبطة بحالة.
+   - تعديل فاتورة بصلاحية خاصة.
+   - خصم أو تعديل سعر.
+   - طباعة فاتورة.
+   - حالة الدفع: غير مفوترة، مفوترة، مدفوعة جزئيًا، مدفوعة، متأخرة.
+
+4. **كشف حساب عميل**
+   - كل الحالات والفواتير والدفعات والرصيد المتحرك.
+   - قابل للتصفية حسب تاريخ، عيادة، طبيب، حالة دفع.
+
+5. **كشف عام لكل العملاء**
+   - كل العملاء مع الرصيد، عدد الحالات، آخر حركة.
+
+6. **المصاريف**
+   - رواتب، مواد، إيجار، كهرباء، صيانة، توصيل، معدات، أخرى.
+
+7. **محاسبة الموظفين**
+   - راتب، سلف، خصومات، مكافآت، مستحقات.
+   - لا تكون HR ضخم؛ فقط ما يخدم الحسابات.
+
+8. **الشركات والموردون**
+   - شركات المواد أو الأجهزة.
+   - فواتير الموردين.
+   - دفعات الموردين.
+   - رصيد المورد.
+
+9. **رأس المال والمساهمون**
+   - مساهمين.
+   - رأس مال مدفوع.
+   - سحوبات.
+   - توزيع أرباح لاحقًا.
+
+#### قاعدة محاسبية مهمة
+
+كل حركة مالية يجب أن تملك:
+
+- مصدر الحركة.
+- المستخدم الذي سجلها.
+- تاريخها.
+- العميل/المورد/الموظف المرتبط.
+- مرجع الحالة أو الفاتورة إذا وجد.
+- سجل تعديل audit trail.
+
+---
+
+### C. قسم الإحصائيات والتقارير — Statistics & Reports
+
+التقارير هدفها إعطاء الإدارة جوابًا سريعًا، لا عرض رسوم كثيرة بلا فائدة.
+
+#### تقارير تشغيلية
+
+- عدد الحالات حسب اليوم/الأسبوع/الشهر.
+- الحالات حسب المرحلة.
+- الحالات المتأخرة.
+- الحالات المسلمة.
+- الحالات قيد العمل.
+- الحالات الناقصة ملفات.
+- حالات تنتظر موافقة الطبيب.
+- متوسط وقت إنجاز الحالة.
+- نسبة فشل QC أو rework.
+
+#### تقارير العملاء والأطباء
+
+- أكثر العيادات طلبًا.
+- أكثر الأطباء طلبًا.
+- أكثر الأطباء تأخيرًا بالموافقة.
+- أكثر الأطباء ربحية.
+- حسابات العملاء المفتوحة.
+
+#### تقارير المنتجات وأنواع العمل
+
+- أنواع العمل الأكثر طلبًا.
+- المنتجات الأكثر استخدامًا.
+- الإيراد حسب المنتج.
+- الوقت المتوسط حسب نوع العمل.
+
+#### تقارير مالية
+
+- الإيرادات.
+- المصاريف.
+- صافي الربح التقديري.
+- الديون.
+- المدفوعات.
+- delivered but unpaid cases.
+
+#### تقارير الموظفين والأقسام
+
+- أداء الفنيين.
+- عدد المهام المكتملة.
+- التأخير حسب المرحلة.
+- أخطاء QC حسب القسم أو الفني.
+
+#### تقارير المستودع
+
+- حركة المواد.
+- المواد منخفضة المخزون.
+- المواد الأكثر استهلاكًا.
+- الهدر والتلف.
+
+كل تقرير يجب أن يدعم filters:
+
+- التاريخ.
+- الطبيب.
+- العيادة.
+- الموظف.
+- نوع العمل.
+- المرحلة.
+- حالة الدفع.
+- المستودع.
+
+---
+
+### D. قسم المستودع — Inventory / Warehouse
+
+المستودع يجب أن يكون بسيطًا لكنه موثوق. لا نريد نظام مخزون ثقيل، بل نظام يعرف ماذا دخل، ماذا خرج، ماذا نقص، وماذا استُهلك.
+
+#### الوظائف الأساسية
+
+- تعريف الأصناف.
+- تعريف المستودعات.
+- إدخال مواد Stock In.
+- إخراج مواد Stock Out.
+- تحويل مواد بين المستودعات.
+- تقرير حركة كل مادة.
+- عرض المخزون الحالي.
+- حد أدنى للمخزون.
+- تنبيه نقص المخزون.
+- كلفة المواد.
+- ربط مواد بحالة أو نوع عمل إذا أمكن.
+- الجرد.
+- الهدر أو التلف.
+- الموردين المرتبطين بالمواد.
+
+#### Material Movement Types
+
+- In.
+- Out.
+- Transfer.
+- Adjustment.
+- Count Correction.
+- Waste/Damage.
+
+كل حركة مادة يجب أن تحتوي:
+
+- المادة.
+- الكمية.
+- الوحدة.
+- المستودع.
+- المستخدم.
+- التاريخ.
+- السبب.
+- case_id إذا المادة خرجت لحالة.
+- balance before / after.
+
+---
+
+### E. قسم الشؤون الإدارية — Administration / HR
+
+هذا القسم يكون خفيفًا وعمليًا، وليس HR enterprise.
+
+#### الوظائف الأساسية
+
+- بيانات الموظفين.
+- الدور الوظيفي.
+- الحالة: نشط، موقوف، سابق.
+- سجل الحضور.
+- late/absent/leave.
+- صلاحيات الموظفين.
+- مهام الموظفين.
+- أداء الموظفين.
+- رواتب أو مستحقات إذا مفعلة.
+- تنبيهات إدارية.
+- سجل نشاطات الموظفين داخل النظام.
+
+#### الهدف
+
+يعرف المدير:
+
+- من حضر؟
+- من تأخر؟
+- من أنجز؟
+- من غير حالة؟
+- من عدل فاتورة؟
+- من سبب تأخير أو فشل QC؟
+
+---
+
+### F. قسم التنبيهات — Notifications Center
+
+التنبيهات يجب أن تكون حسب الدور، لا ضوضاء للجميع.
+
+#### أنواع التنبيهات
+
+- طلبية متأخرة.
+- طلبية واجبة التسليم.
+- حالة ناقصة ملفات.
+- موافقة طبيب متأخرة.
+- تغيير حالة Case.
+- QC مطلوب.
+- QC فشل.
+- Case جاهزة للتوصيل.
+- نقص مخزون.
+- دفع مستحق أو دين.
+- تنبيه إداري.
+- مهمة موظف.
+
+#### القنوات
+
+MVP:
+
+- داخل النظام فقط.
+
+Later:
+
+- WhatsApp.
+- Email.
+- SMS.
+- Push.
+
+كل تنبيه يحتوي:
+
+- نوع التنبيه.
+- الأولوية.
+- الدور أو المستخدم المستهدف.
+- الكيان المرتبط: Case, Invoice, Material, Employee.
+- هل تمت قراءته؟
+- action مباشر.
+
+---
+
+### G. قسم البيانات الأساسية — Master Data
+
+Master Data هو مركز البيانات الثابتة التي يعتمد عليها النظام. لا يجب خلطه مع التشغيل اليومي.
+
+#### المحتويات
+
+- الأطباء.
+- العيادات.
+- العملاء/تصنيفات العملاء.
+- المرضى إذا مطلوب.
+- التعويضات / restorations.
+- المنتجات.
+- أنواع العمل.
+- أنواع الحالات.
+- المواقع / الفروع / مناطق التوصيل.
+- المنتجات والأسعار العامة.
+- الأسعار الخاصة للطبيب أو العيادة.
+- تعريف مراحل العمل.
+- العملة المستخدمة.
+- قائمة الألوان.
+- المواد الأساسية.
+- وحدات القياس.
+- طرق الدفع.
+- حالات الطلب.
+- أسباب الرفض أو الإعادة.
+
+#### قاعدة مهمة
+
+أي شيء يتكرر في النظام يجب أن يكون Master Data وليس كتابة يدوية كل مرة.
+
+---
+
+### H. قسم الإعدادات — Settings
+
+الإعدادات يجب أن تكون بعيدة عن التشغيل اليومي.
+
+#### المحتويات
+
+- إعدادات النظام العامة.
+- إعدادات الطلبية.
+- Auto numbering.
+- الحقول المطلوبة.
+- نظام ترقيم الأسنان.
+- إعدادات الطباعة.
+- طباعة الفاتورة.
+- طباعة لاصقة الباركود.
+- طباعة ملخص الطلبية.
+- إعدادات التقارير.
+- إعدادات السكانر.
+- إعدادات الملفات والمرفقات.
+- إعدادات الباركود.
+- إعدادات العملة.
+- إعدادات اللغة.
+- إدارة المستخدمين.
+- إعدادات الصلاحيات.
+- إعدادات التنبيهات.
+- إعدادات النسخ الاحتياطي إذا مناسب.
+
+---
+
+## 5. إعادة تنظيم الـ Navigation
+
+أفضل Navigation للنظام:
+
+1. **Dashboard / Lab Pulse**
+   - ملخص اليوم.
+   - الحالات المتأخرة.
+   - الحالات الجاهزة للتسليم.
+   - النواقص.
+   - الفلوس المهمة.
+   - تنبيهات الإدارة.
+
+2. **Cases**
+   - All Cases.
+   - New Case.
+   - Due for Delivery.
+   - Overdue.
+   - Missing Requirements.
+   - Case Movement Log.
+   - Case Stage History.
+   - Print Case Summary.
+
+3. **Accounting**
+   - Customer Accounts.
+   - Payments.
+   - Invoices.
+   - Customer Statements.
+   - Expenses.
+   - Employees Accounting.
+   - Companies/Suppliers.
+   - Capital & Shareholders.
+
+4. **Reports**
+   - Cases Reports.
+   - Work Types Reports.
+   - Doctors/Clinics Reports.
+   - Finance Reports.
+   - Employee Performance.
+   - Inventory Reports.
+
+5. **Inventory**
+   - Items.
+   - Warehouses.
+   - Stock In.
+   - Stock Out.
+   - Transfers.
+   - Stock Count.
+   - Low Stock.
+   - Movement Reports.
+
+6. **Administration**
+   - Employees.
+   - Attendance.
+   - Tasks.
+   - Performance.
+   - Activity Log.
+
+7. **Notifications**
+   - All Notifications.
+   - Case Alerts.
+   - Finance Alerts.
+   - Inventory Alerts.
+   - Admin Alerts.
+   - Reminder Rules.
+
+8. **Master Data**
+   - Doctors.
+   - Clinics.
+   - Products/Restorations.
+   - Work Types.
+   - Prices.
+   - Special Prices.
+   - Work Stages.
+   - Shades.
+   - Currencies.
+   - Payment Methods.
+   - Locations.
+
+9. **Settings**
+   - General.
+   - Order Settings.
+   - Users & Permissions.
+   - Printing.
+   - Barcode.
+   - Scanner.
+   - Reports.
+   - Backup.
+
+Navigation must be role-aware. Technician should not see Accounting. Doctor should only see Doctor Portal. Accountant should not see production internals unless needed.
+
+---
+
+## 6. Pain Points Analysis لكل الكادر
+
+### الإدارة
+
+مشاكلهم:
+
+- لا توجد رؤية فورية لحالة المختبر.
+- صعوبة معرفة الأرباح والديون.
+- حالات تتأخر بدون إنذار.
+- تقارير قديمة أو غير دقيقة.
+- صعوبة معرفة سبب الأخطاء.
+
+الحلول:
+
+- Lab Pulse يومي.
+- AI Daily Brief.
+- Case risk alerts.
+- Finance summary.
+- QC failure tracking.
+- Reports قابلة للتصفية.
+
+### موظف الاستقبال / مدخل البيانات
+
+مشاكله:
+
+- إدخال كثير ومتكرر.
+- أخطاء في الطبيب، السن، اللون، أو موعد التسليم.
+- بحث بطيء.
+- معلومات ناقصة من الطبيب.
+
+الحلول:
+
+- New Case سريع.
+- Auto-complete للطبيب والعيادة.
+- Required fields.
+- Duplicate detection.
+- Missing Requirements.
+- Quick Search.
+
+### الفنيون / الإنتاج
+
+مشاكلهم:
+
+- عدم وضوح الأولوية.
+- عدم معرفة المطلوب بدقة.
+- ملفات ناقصة.
+- تضارب مهام.
+- تأخر مواد.
+
+الحلول:
+
+- My Missions.
+- Priority labels.
+- Case sheet واضح.
+- File Vault.
+- Report Issue.
+- Material availability check لاحقًا.
+
+### المحاسب
+
+مشاكله:
+
+- تداخل الفواتير والدفعات.
+- صعوبة كشف حساب العميل.
+- ديون غير متابعة.
+- خصومات وتعديلات بلا سجل.
+
+الحلول:
+
+- Customer Ledger.
+- Invoice-Payment linking.
+- Receivables dashboard.
+- Permission-controlled invoice edit.
+- Audit trail.
+
+### موظف المستودع
+
+مشاكله:
+
+- نقص مفاجئ بالمواد.
+- لا يعرف حركة الصنف.
+- جرد يدوي.
+- هدر أو تلف غير مسجل.
+
+الحلول:
+
+- Stock movement log.
+- Low stock alerts.
+- Stock count.
+- Waste/Damage movement.
+- Material usage by case.
+
+### الطبيب / العيادة
+
+مشاكلهم:
+
+- لا يعرف حالة الطلب.
+- يرسل ملفات وملاحظات على واتساب وتضيع.
+- تأخر التسليم.
+- فواتير غير واضحة.
+
+الحلول:
+
+- Doctor Portal.
+- Case status tracking.
+- Upload files.
+- Approve design.
+- Delivery status.
+- Statement if enabled.
+
+### موظف التوصيل
+
+مشاكله:
+
+- لا يعرف ما الجاهز للتسليم.
+- صعوبة ترتيب التسليم.
+- لا يوجد إثبات واضح للتسليم.
+
+الحلول:
+
+- Delivery Board.
+- Ready/Out/Delivered buckets.
+- Delivery notes.
+- Delivery confirmation.
+- Print delivery sheet.
+
+### مدير النظام
+
+مشاكله:
+
+- صلاحيات غير واضحة.
+- مستخدمون كثيرون.
+- تتبع النشاطات صعب.
+- إعدادات مختلطة بالتشغيل.
+
+الحلول:
+
+- User management.
+- Permission matrix.
+- Activity log.
+- Settings separated.
+- Role-based navigation.
+
+---
+
+## 7. جدول Pain Points والحلول
+
+| الفئة | المشكلة | سبب المشكلة | تأثيرها على العمل | الحل داخل النظام | الميزة المقترحة |
+|---|---|---|---|---|---|
+| الإدارة | ضعف الرؤية اليومية | بيانات مبعثرة | قرارات متأخرة | Dashboard موحد | Lab Pulse |
+| الإدارة | عدم معرفة سبب التأخير | لا يوجد timeline | تكرار التأخير | سجل حركة الحالة | Case Timeline |
+| الاستقبال | إدخال ناقص | لا توجد حقول مطلوبة | تعطيل التصميم | validation | Required Fields |
+| الاستقبال | البحث بطيء | لا يوجد search شامل | ضياع وقت | بحث موحد | Quick Search |
+| الفني | الأولويات غير واضحة | لا توجد mission queue | تأخير وتسليم خاطئ | مهام حسب الأولوية | Technician Missions |
+| الفني | ملفات ناقصة | الملفات في واتساب | توقف الإنتاج | Vault مركزي | File Vault |
+| المحاسب | دفعات غير مربوطة | تسجيل يدوي | أرصدة خاطئة | ربط دفعة بفاتورة | Payment Linking |
+| المحاسب | تعديل فاتورة بلا رقابة | صلاحيات ضعيفة | أخطاء مالية | صلاحيات وسجل | Audit Trail |
+| المستودع | نقص مفاجئ | لا يوجد حد أدنى | توقف الإنتاج | تنبيه نقص | Low Stock Alert |
+| المستودع | حركة مواد غير واضحة | لا يوجد سجل | خسارة أو هدر | movement log | Inventory Movement |
+| الطبيب | لا يعرف حالة الطلب | التواصل عبر واتساب | اتصالات كثيرة | Portal | Doctor Portal |
+| التوصيل | لا يعرف الجاهز | لا يوجد delivery board | تأخير تسليم | لوحة توصيل | Delivery Board |
+| مدير النظام | صلاحيات عشوائية | أدوار غير منظمة | تسريب أو أخطاء | matrix | Role Permissions |
+
+---
+
+## 8. أهم الـ Workflows
+
+### إنشاء Case جديدة
+
+1. Reception يفتح New Case.
+2. يختار الطبيب والعيادة.
+3. يدخل المريض، نوع العمل، السن، اللون، المادة، الموعد.
+4. يرفع الملفات إن وجدت.
+5. النظام يفحص النواقص.
+6. ينشئ case number تلقائي.
+7. تظهر الحالة في Case Cockpit.
+8. إذا جاهزة، تنتقل إلى Design Queue.
+
+### تحويل Case بين مراحل العمل
+
+1. المستخدم يضغط Move Stage.
+2. النظام يفحص الصلاحية.
+3. النظام يفحص readiness.
+4. إذا توجد نواقص، يمنع أو يحذر حسب الإعدادات.
+5. يتم تسجيل الحركة في timeline.
+6. يتم إرسال notification للدور التالي.
+
+### تعديل الطلبية
+
+1. المستخدم يفتح Case.
+2. يضغط Edit.
+3. النظام يسمح فقط حسب الصلاحية.
+4. أي تغيير حساس يسجل في Activity Log.
+5. إذا التعديل يؤثر على السعر أو workflow، يظهر تحذير.
+
+### تعديل الفاتورة
+
+1. Accountant أو Owner يفتح invoice.
+2. يعدل السعر/الخصم.
+3. يكتب سبب التعديل.
+4. النظام يسجل before/after.
+5. يحدث رصيد العميل.
+
+### تسليم الطلبية
+
+1. QC يمرر الحالة.
+2. الحالة تصبح Ready for Delivery.
+3. Delivery يحدد Out for Delivery.
+4. عند التسليم يضغط Delivered.
+5. النظام يحفظ تاريخ التسليم الفعلي.
+6. Finance يتلقى notification إذا الفاتورة غير مدفوعة.
+
+### تسجيل دفعة عميل
+
+1. Accountant يختار العميل.
+2. يدخل المبلغ والطريقة.
+3. يربطها بفاتورة أو يتركها كرصيد.
+4. النظام يحدث كشف الحساب.
+5. يمكن طباعة إيصال.
+
+### إصدار كشف حساب
+
+1. اختيار طبيب/عيادة.
+2. تحديد تاريخ.
+3. عرض الحالات والفواتير والدفعات.
+4. إظهار الرصيد النهائي.
+5. تصدير أو طباعة.
+
+### إدخال مادة للمستودع
+
+1. اختيار المادة.
+2. اختيار المستودع.
+3. إدخال الكمية والتكلفة.
+4. اختيار المورد إن وجد.
+5. النظام يسجل Stock In.
+6. يحدث الرصيد.
+
+### إخراج مادة
+
+1. اختيار المادة والمستودع.
+2. إدخال الكمية.
+3. ربطها بحالة أو سبب.
+4. النظام يسجل Stock Out.
+5. إذا الرصيد دون الحد الأدنى، ينشئ alert.
+
+### تنبيه نقص مخزون
+
+1. النظام يفحص الرصيد.
+2. إذا أقل من minimum stock.
+3. ينشئ notification للمخزن/الإدارة.
+4. يظهر في Low Stock View.
+
+### إنشاء موظف وصلاحياته
+
+1. Admin ينشئ موظف.
+2. يحدد الدور.
+3. النظام يعطي permissions افتراضية.
+4. يمكن تعديل permissions.
+5. الموظف يرى navigation حسب دوره.
+
+### طباعة فاتورة
+
+1. فتح invoice.
+2. اختيار print template.
+3. النظام يولد PDF.
+4. يسجل print action اختياريًا.
+
+### طباعة باركود
+
+1. فتح Case.
+2. الضغط على Print Barcode.
+3. يطبع label فيه case number, doctor, patient, work type, delivery date, QR.
+
+### تتبع حركة Case
+
+1. فتح Case Timeline.
+2. رؤية كل event: created, file uploaded, stage changed, invoice edited, delivered.
+3. كل event يظهر المستخدم والوقت والملاحظة.
+
+---
+
+## 9. User Roles & Permissions
+
+### Owner / Admin
+
+- يرى كل شيء.
+- يدير المستخدمين والصلاحيات.
+- يعدل الإعدادات.
+- يرى الماليات والتقارير.
+- يملك صلاحية تعديل الفواتير والأسعار.
+
+### Manager
+
+- يرى العمليات كلها.
+- يراقب الحالات والتقارير.
+- ينقل الحالات.
+- يرى أداء الموظفين.
+- لا يعدل إعدادات حساسة إلا بصلاحية.
+
+### Reception / Data Entry
+
+- ينشئ ويعدل Cases.
+- يرفع ملفات.
+- يبحث عن الطلبات.
+- يطبع ملخص أو باركود.
+- لا يعدل فواتير إلا بصلاحية خاصة.
+
+### Accountant
+
+- يرى Accounting.
+- ينشئ فواتير ودفعات.
+- يصدر كشوفات.
+- يسجل مصاريف.
+- لا يغير مراحل الإنتاج.
+
+### Technician
+
+- يرى مهامه فقط أو queue المسموح.
+- يفتح الملفات والتعليمات.
+- يبدأ/ينهي مرحلة.
+- يبلغ عن مشكلة.
+- لا يرى المحاسبة.
+
+### Inventory Manager
+
+- يدير الأصناف والمستودعات.
+- يدخل/يخرج مواد.
+- يرى low stock.
+- يرى تقارير حركة المواد.
+
+### HR / Admin Officer
+
+- يدير بيانات الموظفين.
+- يسجل الحضور.
+- يرى نشاطات الموظفين حسب صلاحية.
+
+### Delivery
+
+- يرى Delivery Board.
+- يحدد Out for Delivery.
+- يحدد Delivered.
+- يضيف ملاحظات تسليم.
+
+### Doctor / Clinic Portal
+
+- يرى حالاته فقط.
+- يرفع ملفات.
+- يوافق/يرفض التصميم إذا مفعّل.
+- يضيف ملاحظات.
+- يرى كشف حساب إذا مفعّل.
+
+---
+
+## 10. Features إضافية مقترحة تجعل النظام أقوى
+
+- Quick Search شامل.
+- Barcode / QR Tracking.
+- Case Timeline.
+- Activity Log.
+- Smart Filters.
+- Saved Views.
+- Role-Based Dashboards.
+- Print Templates.
+- Auto Numbering.
+- Duplicate Detection.
+- Audit Trail.
+- Role-Based Notifications.
+- Bulk Actions.
+- Import / Export.
+- Attachment Management.
+- Scanner Integration.
+- WhatsApp Notifications لاحقًا.
+- Customer / Doctor Portal.
+- AI Assistant لاحقًا لتحليل الحالات والتقارير.
+- AI Daily Brief للمالك.
+- AI Case Risk Detection.
+- AI Doctor Message Generator.
+
+---
+
+## 11. MVP Scope
+
+### Must Have
+
+- Auth.
+- Roles & Permissions.
+- Doctors / Clinics.
+- Products / Work Types.
+- Case creation.
+- Case search.
+- Case Cockpit.
+- Case Timeline.
+- File attachments.
+- Basic workflow stages.
+- Due/Overdue cases.
+- Basic invoices.
+- Payments.
+- Customer balance.
+- Basic notifications.
+- Basic reports.
+- Printing invoice / barcode / case summary.
+
+### Should Have
+
+- Technician missions.
+- QC pass/fail.
+- Delivery board.
+- Missing requirements.
+- Activity log.
+- Customer statement.
+- Expenses.
+- Inventory items.
+- Stock in/out.
+- Low stock alerts.
+- Attendance basic.
+
+### Could Have
+
+- Doctor Portal.
+- Design approval.
+- Saved views.
+- Import/export.
+- Advanced reports.
+- Supplier accounts.
+- Employee accounting.
+- Capital/shareholders.
+
+### Future
+
+- WhatsApp integration.
+- AI assistant.
+- Advanced AI analytics.
+- Multi-tenant SaaS billing.
+- Marketplace.
+- Full inventory costing.
+- Multi-branch.
+- Device/scanner deep integration.
+
+---
+
+## 12. UX Rules
+
+- أقل عدد ضغطات لإنجاز المهمة.
+- البحث يجب أن يكون دائمًا قريبًا.
+- إدخال البيانات ذكي مع auto-complete.
+- الواجهة غير مزدحمة.
+- الأزرار واضحة: Save, Move Stage, Print, Add Payment, Upload File.
+- Dashboard حسب الدور.
+- لا تظهر للمستخدم إلا الأشياء التي يحتاجها.
+- كل Case لها Timeline واضح.
+- كل فاتورة مرتبطة بحالة وعميل.
+- كل حركة مالية أو مخزنية لها سجل.
+- كل تعديل حساس يظهر في Activity Log.
+- كل قائمة كبيرة تحتاج filters وsaved views.
+- Empty states تشرح ماذا يفعل المستخدم.
+- Mobile-friendly للفني والتوصيل.
+
+---
+
+## 13. Database Entities
+
+### Core Access
+
+- Tenant
+- Users
+- Roles
+- Permissions
+- UserRoles
+- RolePermissions
+
+### Master Data
+
+- Clinics
+- Doctors
+- Customers
+- Patients
+- Products
+- Restorations
+- WorkTypes
+- WorkStages
+- Prices
+- SpecialPrices
+- Currencies
+- Shades
+- ToothNumberingSystems
+- PaymentMethods
+- Locations
+- CaseTypes
+- CaseStatuses
+
+### Cases
+
+- Cases
+- Orders
+- CaseFiles
+- CaseStatusHistory
+- CaseStageHistory
+- CaseTimelineEvents
+- CaseRequirements
+- CaseBlockers
+- CaseNotes
+- CasePrintLogs
+
+### Accounting
+
+- Invoices
+- InvoiceItems
+- Payments
+- CustomerLedgerEntries
+- Expenses
+- ExpenseCategories
+- Companies
+- SupplierAccounts
+- SupplierPayments
+- EmployeeAccountingEntries
+- Shareholders
+- CapitalTransactions
+
+### Inventory
+
+- Materials
+- MaterialCategories
+- Warehouses
+- InventoryMovements
+- StockCounts
+- StockCountItems
+- LowStockAlerts
+- Suppliers
+- UnitsOfMeasurement
+
+### Administration
+
+- Employees
+- Attendance
+- EmployeeTasks
+- EmployeePerformanceRecords
+
+### Notifications & Audit
+
+- Notifications
+- NotificationRules
+- ActivityLogs
+- EventLogs
+- FileAccessLogs
+
+### Printing & Settings
+
+- PrintTemplates
+- BarcodeTemplates
+- ReportTemplates
+- Settings
+- BackupLogs
+
+### AI Later
+
+- AIInsights
+- AIDailyBriefs
+- AIRecommendations
+- AIMessageDrafts
+
+---
+
+## 14. النسخة النهائية المطوّرة من الإضافة
+
+الإضافة الجديدة لا تُعامل كقائمة من نظام قديم، بل كطبقة تشغيلية منظمة داخل LabOS. يتم دمجها كالآتي:
+
+- **Cases & Orders** تصبح مركز التشغيل، وتشمل إنشاء الطلبات، البحث، التعديل، التتبع، المرفقات، المراحل، الباركود، والتسليم.
+- **Accounting** تصبح محاسبة خفيفة مرتبطة بالحالات والعملاء: فواتير، دفعات، أرصدة، مصاريف، موظفين، موردين، ومساهمين.
+- **Reports** تصبح طبقة قراءة إدارية سريعة، وليست رسومًا عشوائية.
+- **Inventory** يصبح مستودعًا بسيطًا لحركة المواد والتنبيهات والجرد.
+- **Administration** تصبح إدارة موظفين وحضور وصلاحيات ونشاطات.
+- **Notifications** تصبح engine حسب الدور والأولوية.
+- **Master Data** يصبح مصدر الحقيقة للبيانات الثابتة.
+- **Settings** تصبح مكان الإعدادات فقط، لا التشغيل اليومي.
+
+هذه الإضافة تجعل النظام أقوى من النظام القديم لأنها:
+
+1. تلغي التكرار.
+2. تربط كل شيء بالحالة أو العميل أو المادة أو الموظف.
+3. تجعل الواجهة role-based.
+4. تجعل كل حركة قابلة للتتبع.
+5. تبقي النظام عمليًا بدل أن يتحول إلى ERP مرهق.
+
+---
+
+## 15. Final AI-Ready Brief Section
+
+استخدم هذا القسم كجزء رسمي داخل الـ SaaS Brief الأصلي:
+
+```text
+LabOS must include a simplified operational ERP layer designed specifically for dental labs. This layer must not copy old software structures. It must reorganize cases, accounting, reports, inventory, administration, notifications, master data, and settings into a clean role-based SaaS architecture.
+
+The main navigation should be:
+Dashboard, Cases, Accounting, Reports, Inventory, Administration, Notifications, Master Data, Settings.
+
+Cases are the center of the system. Every order must connect to a doctor, clinic, patient, product/work type, workflow stage, files, invoice, payment status, timeline, and delivery status.
+
+Accounting must be simple and case-connected: customer accounts, payments, invoices, statements, expenses, employee accounting, suppliers/companies, capital and shareholders.
+
+Reports must serve fast management decisions: cases, work types, doctors, clinics, revenue, expenses, profit, employee performance, inventory movement, late cases, delivered cases, and in-progress cases.
+
+Inventory must track materials without ERP complexity: item definitions, warehouses, stock in, stock out, transfers, movement reports, stock count, low stock alerts, cost, waste, and material usage by case when available.
+
+Administration must manage employees, attendance, permissions, tasks, performance, and activity logs.
+
+Notifications must be role-based and action-oriented: late orders, due orders, missing files, status changes, low stock, debts, payments, employee/admin alerts.
+
+Master Data must be the central place for doctors, clinics, restorations, products, work types, stages, prices, special prices, locations, currencies, shades, payment methods, case statuses, and reusable system definitions.
+
+Settings must contain printing, reports, invoice templates, barcode labels, case summary printing, tooth numbering, order settings, users, permissions, scanner settings, barcode settings, currency, language, and backup.
+
+The system must remain simple, fast, and practical. Each role should see only what they need. Every case must have a clear timeline. Every invoice must connect to a case and customer. Every financial or inventory movement must have an audit trail. No fake dashboards, no unnecessary complexity, and no copied old ERP behavior.
+```
+
+---
+
+## 16. Final Prompt for Any AI
+
+```text
+Act as a senior SaaS Product Architect, ERP System Analyst, Dental Lab Operations Expert, UX Strategist, Database Architect, and AI Brief Engineer.
+
+I am building LabOS / LabFlow / ODENT LabOS, a Dental Lab Operating System that starts inside one real dental lab and later becomes SaaS for other labs.
+
+The system is not a generic CRM, not a classic ERP, and not an old dashboard. It is a modern operational system for dental labs.
+
+Core modules:
+1. Dashboard / Lab Pulse
+2. Cases & Orders
+3. Accounting
+4. Reports
+5. Inventory / Warehouse
+6. Administration / HR
+7. Notifications
+8. Master Data
+9. Settings
+10. Doctor Portal later or when needed
+
+Core philosophy:
+- simple
+- fast
+- role-based
+- practical
+- not cluttered
+- easy for daily staff
+- powerful for management
+- better than old lab systems
+- every important movement must be traceable
+
+Cases are the center of the system.
+Every case connects to doctor, clinic, patient, product/work type, files, workflow stage, invoice, payment status, delivery status, timeline, and activity log.
+
+Accounting must be simple and connected to cases:
+customer accounts, payments, invoices, customer statements, expenses, employee accounting, suppliers/companies, capital/shareholders, balances, debts, and reports.
+
+Inventory must be simple but reliable:
+items, warehouses, stock in, stock out, transfers, movement reports, low stock alerts, stock count, cost, waste/damage, supplier link, and optional case usage link.
+
+Administration must include:
+employees, attendance, permissions, tasks, performance, admin alerts, and employee activity logs.
+
+Notifications must be role-based:
+late orders, due orders, missing files, case status changes, QC alerts, delivery alerts, low stock, payment/debt alerts, employee/admin alerts.
+
+Master Data must centralize:
+doctors, clinics, customers, restorations, products, work types, stages, prices, special prices, locations, currencies, shades, payment methods, case statuses, and reusable definitions.
+
+Settings must include:
+printing, reports, invoice printing, barcode label printing, case summary printing, tooth numbering system, order settings, users, permissions, scanner settings, barcode settings, currency, language, system settings, and backups.
+
+UX rules:
+- minimal clicks
+- quick search everywhere
+- role-based dashboards
+- smart filters
+- saved views
+- clear buttons
+- mobile-friendly technician/delivery workflows
+- every case has a timeline
+- every invoice links to case and customer
+- every financial/inventory movement has audit trail
+- do not show users modules they do not need
+
+MVP priority:
+Must have auth, roles, doctors, clinics, products, case creation, case search, case cockpit, file attachments, workflow stages, due/overdue cases, basic invoice, payments, customer balances, notifications, printing, and basic reports.
+
+Do not overbuild marketplace, full HR, full inventory costing, advanced ERP accounting, SaaS billing, or advanced AI in the first version.
+
+When helping me, always convert ideas into buildable modules, workflows, database entities, permissions, UX screens, and MVP priorities. Avoid generic SaaS advice and map everything to real dental lab operations.
+```

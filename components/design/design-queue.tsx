@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ReadinessRing } from "@/components/ui/readiness-ring";
 import type { DesignQueueItem, DesignQueueStage } from "@/lib/data/design";
+import { motion, AnimatePresence } from "framer-motion";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -92,7 +93,14 @@ function DesignCaseCard({ item }: { item: DesignQueueItem }) {
   const isUrgentOrMissingScan = item.isUrgent || !item.hasSourceFiles;
 
   return (
-    <article className={`relative overflow-hidden rounded-lg border bg-card p-4 space-y-3 ${isUrgentOrMissingScan ? "mission-card-urgent-line border-amber-200/60 dark:border-amber-800/40" : ""}`}>
+    <motion.article 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 100, damping: 15 }}
+      layout
+      className={`relative overflow-hidden rounded-2xl glass p-5 space-y-4 hover:glow-primary hover:-translate-y-0.5 transition-all duration-300 ${isUrgentOrMissingScan ? "mission-card-urgent-line border-warning/40 bg-warning/5" : ""}`}
+    >
       {/* Header */}
       <div className="flex items-start gap-4">
         {/* Readiness ring */}
@@ -151,7 +159,7 @@ function DesignCaseCard({ item }: { item: DesignQueueItem }) {
       </div>
 
       {/* Next best action */}
-      <div className="rounded-md bg-muted/40 border px-3 py-2 text-xs">
+      <div className="rounded-xl bg-background/40 border border-border/50 px-4 py-2.5 text-xs shadow-sm">
         <span className="text-muted-foreground font-medium">Next: </span>
         <span>{action}</span>
       </div>
@@ -172,7 +180,7 @@ function DesignCaseCard({ item }: { item: DesignQueueItem }) {
           Design versions →
         </Link>
       </div>
-    </article>
+    </motion.article>
   );
 }
 
@@ -206,15 +214,19 @@ function EmptyState({ stage }: { stage: DesignQueueStage }) {
   const { icon: Icon, title, description } = config[stage];
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed bg-muted/20 py-14 text-center">
-      <Icon className="size-8 text-muted-foreground" />
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex flex-col items-center gap-3 rounded-2xl glass border-dashed py-16 text-center"
+    >
+      <Icon className="size-10 text-muted-foreground/60" />
       <div>
-        <p className="text-sm font-medium">{title}</p>
-        <p className="mt-1 text-xs text-muted-foreground max-w-xs mx-auto">
+        <p className="text-base font-semibold text-foreground">{title}</p>
+        <p className="mt-1.5 text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
           {description}
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -257,7 +269,7 @@ export function DesignQueue({
       </div>
 
       {/* ── Tab bar ───────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-1.5 border-b pb-4">
+      <div className="flex gap-1 overflow-x-auto rounded-xl glass p-1.5 shadow-sm scrollbar-hide">
         {tabs.map((tab) => {
           const meta = TAB_META[tab];
           const count = totalByStage[tab] ?? 0;
@@ -267,18 +279,26 @@ export function DesignQueue({
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={`relative inline-flex items-center shrink-0 gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
                 isActive
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
               }`}
             >
-              {meta.label}
+              {isActive && (
+                <motion.div
+                  layoutId="design-queue-active-tab"
+                  className="absolute inset-0 rounded-lg bg-primary/10 border border-primary/20 shadow-sm"
+                  initial={false}
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              <span className="relative z-10">{meta.label}</span>
               {count > 0 && (
                 <span
-                  className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
+                  className={`relative z-10 rounded-full px-2 py-0.5 text-[11px] font-bold ${
                     isActive
-                      ? "bg-background/20 text-background"
+                      ? "bg-primary/20 text-primary"
                       : "bg-muted text-muted-foreground"
                   }`}
                 >
@@ -291,18 +311,22 @@ export function DesignQueue({
       </div>
 
       {/* ── Case list ─────────────────────────────────────────── */}
-      {filtered.length > 0 ? (
-        <div className="space-y-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {TAB_META[activeTab].label} · {filtered.length} case{filtered.length === 1 ? "" : "s"}
-          </p>
-          {filtered.map((item) => (
-            <DesignCaseCard key={item.id} item={item} />
-          ))}
-        </div>
-      ) : (
-        <EmptyState stage={activeTab} />
-      )}
+      <div className="min-h-[400px]">
+        {filtered.length > 0 ? (
+          <motion.div layout className="space-y-4">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+              {TAB_META[activeTab].label} · {filtered.length} case{filtered.length === 1 ? "" : "s"}
+            </p>
+            <AnimatePresence mode="popLayout">
+              {filtered.map((item) => (
+                <DesignCaseCard key={item.id} item={item} />
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        ) : (
+          <EmptyState stage={activeTab} />
+        )}
+      </div>
     </div>
   );
 }

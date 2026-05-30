@@ -10,7 +10,7 @@ export function KpiGrid({ kpis }: { kpis: DashboardKpi[] }) {
             <p className="text-sm font-medium text-muted-foreground">
               {kpi.label}
             </p>
-            <p className="mt-3 text-3xl font-semibold">{kpi.value}</p>
+            <p className="mt-3 text-3xl font-semibold tabular-nums" data-kpi="">{kpi.value}</p>
             <p className="mt-2 text-sm text-muted-foreground">{kpi.hint}</p>
           </CardContent>
         </Card>

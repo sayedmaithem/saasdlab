@@ -10,12 +10,10 @@ import { cn } from "@/lib/utils";
 import type { AppRole } from "@/lib/constants/roles";
 
 const GROUP_ORDER: NavGroup[] = [
-  "command",
-  "lab-ops",
+  "workspace",
   "finance",
   "logistics",
-  "admin",
-  "portals",
+  "system",
 ];
 
 // ── Mobile hamburger button (rendered in Topbar) ──────────────────────────────

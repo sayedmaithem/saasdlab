@@ -1,9 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { stageLabels, productionStages } from "@/lib/constants/workflow";
 import type { CaseListItem } from "@/lib/data/cases";
+import { motion } from "framer-motion";
+import { Filter, ArrowRight } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
   active: "Active",
@@ -24,12 +26,12 @@ const STATUS_TONE: Record<string, "amber" | "green" | "red" | "neutral"> = {
 };
 
 function dueTone(item: CaseListItem) {
-  if (item.isOverdue) return "text-red-700";
+  if (item.isOverdue) return "text-destructive";
   if (!item.dueDate) return "text-muted-foreground";
   const days = Math.ceil(
     (new Date(`${item.dueDate}T00:00:00`).getTime() - Date.now()) / 86_400_000,
   );
-  return days <= 2 ? "text-amber-700" : "text-muted-foreground";
+  return days <= 2 ? "text-warning" : "text-muted-foreground";
 }
 
 export function CasesTable({
@@ -42,16 +44,21 @@ export function CasesTable({
   filters: Record<string, string | undefined>;
 }) {
   return (
-    <div className="space-y-5">
-      <form className="grid gap-3 rounded-lg border bg-card p-4 md:grid-cols-[1fr_160px_180px_220px_120px_120px_auto]">
+    <div className="space-y-6">
+      <form className="glass rounded-xl p-3 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 px-2 text-muted-foreground">
+          <Filter className="h-4 w-4" />
+          <span className="text-xs font-semibold uppercase tracking-wider">Filters</span>
+        </div>
+        <div className="h-4 w-px bg-border mx-2 hidden sm:block" />
         <input
-          className="h-10 rounded-md border bg-card px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="h-9 rounded-lg border border-border bg-background/50 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary min-w-[180px] flex-1"
           name="q"
           placeholder="Case, doctor, patient..."
           defaultValue={filters.q}
         />
         <select
-          className="h-10 rounded-md border bg-card px-3 text-sm"
+          className="h-9 rounded-lg border border-border bg-background/50 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
           name="status"
           defaultValue={filters.status}
         >
@@ -62,7 +69,7 @@ export function CasesTable({
           <option value="cancelled">Cancelled</option>
         </select>
         <select
-          className="h-10 rounded-md border bg-card px-3 text-sm"
+          className="h-9 rounded-lg border border-border bg-background/50 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
           name="stage"
           defaultValue={filters.stage}
         >
@@ -74,7 +81,7 @@ export function CasesTable({
           ))}
         </select>
         <select
-          className="h-10 rounded-md border bg-card px-3 text-sm"
+          className="h-9 rounded-lg border border-border bg-background/50 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
           name="doctor"
           defaultValue={filters.doctor}
         >
@@ -85,78 +92,108 @@ export function CasesTable({
             </option>
           ))}
         </select>
-        <label className="flex items-center gap-2 text-sm font-medium">
-          <input name="overdue" type="checkbox" defaultChecked={filters.overdue === "true"} />
+        <label className="flex items-center gap-2 text-sm font-medium px-2 cursor-pointer">
+          <input name="overdue" type="checkbox" defaultChecked={filters.overdue === "true"} className="rounded border-border text-primary focus:ring-primary accent-primary" />
           Overdue
         </label>
-        <label className="flex items-center gap-2 text-sm font-medium">
-          <input name="urgent" type="checkbox" defaultChecked={filters.urgent === "true"} />
+        <label className="flex items-center gap-2 text-sm font-medium px-2 cursor-pointer">
+          <input name="urgent" type="checkbox" defaultChecked={filters.urgent === "true"} className="rounded border-border text-primary focus:ring-primary accent-primary" />
           Urgent
         </label>
-        <Button type="submit">Filter</Button>
+        <button type="submit" className="h-9 px-4 rounded-lg bg-primary/10 text-primary font-semibold text-sm hover:bg-primary/20 transition-colors ml-auto">
+          Apply
+        </button>
       </form>
 
       {cases.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center space-y-3">
-            <p className="text-base font-medium text-foreground">No cases found</p>
-            <p className="text-sm text-muted-foreground">
-              {Object.values(filters).some(Boolean)
-                ? "Try clearing the filters above."
-                : "No cases have been created yet. Submit the first case to get started."}
-            </p>
-            {!Object.values(filters).some(Boolean) && (
-              <Link href="/cases/new" className="inline-block text-sm font-medium text-primary hover:underline">
-                Create first case →
-              </Link>
-            )}
-          </CardContent>
-        </Card>
+        <div className="glass rounded-2xl p-12 text-center space-y-4">
+          <p className="text-lg font-semibold text-foreground">No cases found</p>
+          <p className="text-sm text-muted-foreground">
+            {Object.values(filters).some(Boolean)
+              ? "Try clearing the filters above."
+              : "No cases have been created yet. Submit the first case to get started."}
+          </p>
+          {!Object.values(filters).some(Boolean) && (
+            <Link href="/cases/new" className="inline-block mt-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
+              Create first case →
+            </Link>
+          )}
+        </div>
       ) : (
-      <Card>
-        <CardContent className="overflow-x-auto p-0">
-          <table className="w-full min-w-[1080px] text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs uppercase tracking-normal text-muted-foreground">
-                <th className="p-4">Case</th>
-                <th className="p-4">Doctor</th>
-                <th className="p-4">Patient</th>
-                <th className="p-4">Work</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Stage</th>
-                <th className="p-4">Priority</th>
-                <th className="p-4">Due</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cases.map((item) => (
-                <tr key={item.id} className="border-b last:border-0">
-                  <td className="p-4">
-                    <Link href={`/cases/${item.id}`} className="font-semibold hover:underline">
-                      {item.caseNumber}
-                    </Link>
-                    {item.isUrgent ? <div className="mt-2"><Badge tone="red">Urgent</Badge></div> : null}
-                  </td>
-                  <td className="p-4">{item.doctorName}</td>
-                  <td className="p-4">{item.patientName}</td>
-                  <td className="p-4">{item.workType}</td>
-                  <td className="p-4">
-                    <Badge tone={STATUS_TONE[item.status] ?? "neutral"}>
-                      {STATUS_LABELS[item.status] ?? item.status.replaceAll("_", " ")}
-                    </Badge>
-                  </td>
-                  <td className="p-4">{stageLabels[item.currentStage as keyof typeof stageLabels] ?? item.currentStage.replaceAll("_", " ")}</td>
-                  <td className="p-4 font-semibold">{item.priorityScore}</td>
-                  <td className={`p-4 font-medium ${dueTone(item)}`}>
-                    {item.dueDate ?? "Not set"}
-                    {item.isOverdue ? <span className="block text-xs">Overdue</span> : null}
-                  </td>
+        <div className="rounded-2xl glass overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1080px] text-sm text-left">
+              <thead className="border-b border-border bg-background/30 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="px-6 py-4 font-semibold">Case</th>
+                  <th className="px-6 py-4 font-semibold">Doctor / Patient</th>
+                  <th className="px-6 py-4 font-semibold">Work</th>
+                  <th className="px-6 py-4 font-semibold">Stage</th>
+                  <th className="px-6 py-4 font-semibold">Status</th>
+                  <th className="px-6 py-4 font-semibold">Due</th>
+                  <th className="px-6 py-4 font-semibold text-right">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+              </thead>
+              <motion.tbody 
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+                }}
+              >
+                {cases.map((item) => (
+                  <motion.tr 
+                    variants={{
+                      hidden: { opacity: 0, y: 10 },
+                      visible: { opacity: 1, y: 0, transition: { type: "spring", bounce: 0, duration: 0.4 } }
+                    }}
+                    key={item.id} 
+                    className="border-b border-border last:border-0 hover:bg-white/[0.02] transition-colors group"
+                  >
+                    <td className="px-6 py-4 align-middle">
+                      <div className="flex items-center gap-3">
+                        <Link href={`/cases/${item.id}`} className="font-mono text-xs font-semibold text-primary hover:underline">
+                          {item.caseNumber}
+                        </Link>
+                        {item.isUrgent && <Badge tone="red" className="text-[10px] py-0 px-1.5 h-5 rounded-md">URGENT</Badge>}
+                      </div>
+                      <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="font-medium">Priority:</span> {item.priorityScore}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 align-middle">
+                      <div className="font-medium">{item.doctorName}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5 truncate max-w-[200px]">{item.patientName}</div>
+                    </td>
+                    <td className="px-6 py-4 align-middle">
+                      <div className="text-sm truncate max-w-[200px]">{item.workType}</div>
+                    </td>
+                    <td className="px-6 py-4 align-middle">
+                      <div className="inline-flex items-center px-2 py-1 rounded-md bg-info/10 text-info text-xs font-medium border border-info/20">
+                        {stageLabels[item.currentStage as keyof typeof stageLabels] ?? item.currentStage.replaceAll("_", " ")}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 align-middle">
+                      <Badge tone={STATUS_TONE[item.status] ?? "neutral"} className="rounded-md">
+                        {STATUS_LABELS[item.status] ?? item.status.replaceAll("_", " ")}
+                      </Badge>
+                    </td>
+                    <td className={`px-6 py-4 align-middle text-xs font-medium ${dueTone(item)}`}>
+                      {item.dueDate ?? "Not set"}
+                      {item.isOverdue && <span className="block mt-0.5 text-[10px] uppercase font-bold text-destructive">Overdue</span>}
+                    </td>
+                    <td className="px-6 py-4 align-middle text-right">
+                      <Link href={`/cases/${item.id}`} className="inline-flex items-center justify-center h-8 w-8 rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-primary">
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      </Link>
+                    </td>
+                  </motion.tr>
+                ))}
+              </motion.tbody>
+            </table>
+          </div>
+        </div>
       )}
     </div>
   );

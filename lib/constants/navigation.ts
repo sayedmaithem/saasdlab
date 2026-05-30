@@ -1,45 +1,36 @@
 import {
-  BadgeDollarSign,
-  BarChart3,
-  Boxes,
-  ClipboardCheck,
-  FileStack,
-  Gauge,
-  Hospital,
   LayoutDashboard,
-  PenTool,
-  RotateCcw,
-  Settings,
-  Truck,
-  UserCog,
-  UsersRound,
+  FileStack,
   WalletCards,
-  Building2,
-  LayoutGrid,
-  Wrench,
-  Map,
+  BarChart3,
   Package,
-  TrendingUp,
-  GitCommitHorizontal,
+  UsersRound,
+  Bell,
+  Database,
+  Settings,
+  Factory,
+  Palette,
+  ShieldCheck,
+  Truck,
+  Stethoscope,
+  Building2,
+  UserCog,
+  Receipt,
+  CreditCard,
+  RefreshCcw,
+  HeartPulse,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type { AppRole } from "@/lib/constants/roles";
 
-export type NavGroup =
-  | "command"
-  | "lab-ops"
-  | "finance"
-  | "logistics"
-  | "admin"
-  | "portals";
+export type NavGroup = "workspace" | "production" | "finance" | "logistics" | "system";
 
 export const navGroupLabels: Record<NavGroup, string> = {
-  "command": "Command",
-  "lab-ops": "Operations",
-  "finance": "Finance",
-  "logistics": "Logistics",
-  "admin": "Configuration",
-  "portals": "Portals",
+  workspace:  "Workspace",
+  production: "Production",
+  finance:    "Finance & Analytics",
+  logistics:  "Logistics",
+  system:     "System & Config",
 };
 
 export type AppNavItem = {
@@ -51,119 +42,87 @@ export type AppNavItem = {
 };
 
 export const appNavigation: AppNavItem[] = [
-  {
-    label: "Operations HQ",
-    href: "/owner",
-    icon: LayoutGrid,
-    roles: ["super_admin", "lab_owner", "lab_manager"],
-    group: "command",
-  },
-  {
-    label: "Platform HQ",
-    href: "/hq",
-    icon: Building2,
-    roles: ["super_admin"],
-    group: "command",
-  },
-  {
-    label: "Command Center",
-    href: "/command-center",
-    icon: LayoutDashboard,
-    roles: ["super_admin", "lab_owner", "lab_manager"],
-    group: "command",
-  },
+  // ── Workspace ──────────────────────────────────────────────────────────
   {
     label: "Dashboard",
     href: "/dashboard",
-    icon: Gauge,
+    icon: LayoutDashboard,
     roles: ["super_admin", "lab_owner", "lab_manager", "reception"],
-    group: "lab-ops",
+    group: "workspace",
   },
   {
     label: "Cases",
     href: "/cases",
     icon: FileStack,
     roles: ["super_admin", "lab_owner", "lab_manager", "reception", "technician", "doctor"],
-    group: "lab-ops",
+    group: "workspace",
   },
   {
-    label: "Doctors",
-    href: "/doctors",
-    icon: UsersRound,
-    roles: ["super_admin", "lab_owner", "lab_manager", "reception", "accountant"],
-    group: "lab-ops",
+    label: "Doctor Portal",
+    href: "/doctor-portal",
+    icon: HeartPulse,
+    roles: ["super_admin", "lab_owner", "lab_manager", "reception", "doctor"],
+    group: "workspace",
   },
   {
-    label: "Clinics",
-    href: "/clinics",
-    icon: Hospital,
-    roles: ["super_admin", "lab_owner", "lab_manager", "reception", "accountant"],
-    group: "lab-ops",
+    label: "Notifications",
+    href: "/notifications",
+    icon: Bell,
+    roles: ["super_admin", "lab_owner", "lab_manager", "reception", "technician", "accountant", "delivery", "doctor"],
+    group: "workspace",
   },
+
+  // ── Production ─────────────────────────────────────────────────────────
   {
     label: "Production",
     href: "/production",
-    icon: Boxes,
+    icon: Factory,
     roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
-    group: "lab-ops",
+    group: "production",
   },
   {
     label: "Design",
     href: "/design",
-    icon: PenTool,
+    icon: Palette,
     roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
-    group: "lab-ops",
+    group: "production",
   },
   {
     label: "Quality Control",
     href: "/quality-control",
-    icon: ClipboardCheck,
+    icon: ShieldCheck,
     roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
-    group: "lab-ops",
+    group: "production",
   },
   {
     label: "Remakes",
     href: "/remakes",
-    icon: RotateCcw,
-    roles: ["super_admin", "lab_owner", "lab_manager", "reception", "accountant"],
-    group: "lab-ops",
+    icon: RefreshCcw,
+    roles: ["super_admin", "lab_owner", "lab_manager", "technician", "reception"],
+    group: "production",
   },
-  {
-    // Management list: managers only — technicians are redirected to /workspace
-    label: "Technicians",
-    href: "/technicians",
-    icon: UserCog,
-    roles: ["super_admin", "lab_owner", "lab_manager"],
-    group: "lab-ops",
-  },
-  {
-    // First-class workspace portal for technician role users
-    label: "My Workspace",
-    href: "/technicians/workspace",
-    icon: Wrench,
-    roles: ["technician"],
-    group: "lab-ops",
-  },
+
+  // ── Finance & Analytics ────────────────────────────────────────────────
   {
     label: "Invoices",
     href: "/invoices",
-    icon: BadgeDollarSign,
+    icon: Receipt,
     roles: ["super_admin", "lab_owner", "accountant"],
     group: "finance",
   },
   {
     label: "Payments",
     href: "/payments",
-    icon: WalletCards,
+    icon: CreditCard,
     roles: ["super_admin", "lab_owner", "accountant"],
     group: "finance",
   },
   {
-    label: "Delivery",
-    href: "/delivery",
-    icon: Truck,
-    roles: ["super_admin", "lab_owner", "lab_manager", "delivery"],
-    group: "logistics",
+    label: "Accounting",
+    href: "/finance",
+    icon: WalletCards,
+    roles: ["super_admin", "lab_owner", "accountant"],
+    group: "finance",
   },
   {
     label: "Reports",
@@ -172,47 +131,64 @@ export const appNavigation: AppNavItem[] = [
     roles: ["super_admin", "lab_owner", "lab_manager", "accountant"],
     group: "finance",
   },
+
+  // ── Logistics ──────────────────────────────────────────────────────────
   {
-    label: "Settings",
-    href: "/settings",
-    icon: Settings,
-    roles: ["super_admin", "lab_owner"],
-    group: "admin",
-  },
-  {
-    label: "Doctor Portal",
-    href: "/doctor-portal",
-    icon: ClipboardCheck,
-    roles: ["super_admin", "lab_owner", "doctor"],
-    group: "portals",
-  },
-  // ── LabOS Command OS additions ───────────────────────────────────────────
-  {
-    label: "Finance Overview",
-    href: "/finance",
-    icon: TrendingUp,
-    roles: ["super_admin", "lab_owner", "accountant"],
-    group: "finance",
+    label: "Delivery",
+    href: "/delivery",
+    icon: Truck,
+    roles: ["super_admin", "lab_owner", "lab_manager", "delivery", "reception"],
+    group: "logistics",
   },
   {
     label: "Inventory",
     href: "/inventory",
     icon: Package,
     roles: ["super_admin", "lab_owner", "lab_manager", "technician"],
-    group: "lab-ops",
+    group: "logistics",
   },
+
+  // ── System & Config ────────────────────────────────────────────────────
   {
-    label: "Movement Log",
-    href: "/cases/log",
-    icon: GitCommitHorizontal,
+    label: "Doctors",
+    href: "/doctors",
+    icon: Stethoscope,
     roles: ["super_admin", "lab_owner", "lab_manager", "reception"],
-    group: "lab-ops",
+    group: "system",
   },
   {
-    label: "LabOS Map",
-    href: "/lab-os",
-    icon: Map,
+    label: "Clinics",
+    href: "/clinics",
+    icon: Building2,
+    roles: ["super_admin", "lab_owner", "lab_manager", "reception"],
+    group: "system",
+  },
+  {
+    label: "Technicians",
+    href: "/technicians",
+    icon: UserCog,
+    roles: ["super_admin", "lab_owner", "lab_manager"],
+    group: "system",
+  },
+  {
+    label: "Administration",
+    href: "/command-center",
+    icon: UsersRound,
     roles: ["super_admin", "lab_owner"],
-    group: "admin",
+    group: "system",
+  },
+  {
+    label: "Master Data",
+    href: "/command-center/master-data",
+    icon: Database,
+    roles: ["super_admin", "lab_owner", "lab_manager"],
+    group: "system",
+  },
+  {
+    label: "Settings",
+    href: "/settings",
+    icon: Settings,
+    roles: ["super_admin", "lab_owner"],
+    group: "system",
   },
 ];
