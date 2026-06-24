@@ -3,6 +3,11 @@ import type {
   IntakeFileType,
   ProductionStage,
 } from "@/lib/constants/workflow";
+import type {
+  CaseFileCategory,
+  CaseFileVisibility,
+} from "@/lib/files/case-file-rules";
+import type { DesignStatus } from "@/lib/design/design-workflow";
 import type { CasePriority } from "@/types/app";
 
 export type Json =
@@ -61,21 +66,47 @@ export type Database = {
       profiles: {
         Row: {
           id: string;
+          lab_id: string | null;
           full_name: string | null;
           email: string | null;
           phone: string | null;
+          role: AppRole | null;
+          is_active: boolean;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id: string;
+          lab_id?: string | null;
           full_name?: string | null;
           email?: string | null;
           phone?: string | null;
+          role?: AppRole | null;
+          is_active?: boolean;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
+        Relationships: [];
+      };
+      user_roles: {
+        Row: {
+          id: string;
+          lab_id: string;
+          user_id: string;
+          role: AppRole;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          user_id: string;
+          role: AppRole;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["user_roles"]["Insert"]>;
         Relationships: [];
       };
       clinics: {
@@ -84,7 +115,10 @@ export type Database = {
           lab_id: string;
           name: string;
           address: string | null;
+          email: string | null;
           phone: string | null;
+          notes: string | null;
+          is_active: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -93,7 +127,10 @@ export type Database = {
           lab_id: string;
           name: string;
           address?: string | null;
+          email?: string | null;
           phone?: string | null;
+          notes?: string | null;
+          is_active?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -110,6 +147,12 @@ export type Database = {
           phone: string | null;
           default_clinic_id: string | null;
           performance_score: number;
+          is_active: boolean;
+          is_vip: boolean;
+          address: string | null;
+          notes: string | null;
+          payment_terms: string | null;
+          default_price_group: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -122,28 +165,56 @@ export type Database = {
           phone?: string | null;
           default_clinic_id?: string | null;
           performance_score?: number;
+          is_active?: boolean;
+          is_vip?: boolean;
+          address?: string | null;
+          notes?: string | null;
+          payment_terms?: string | null;
+          default_price_group?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["doctors"]["Insert"]>;
         Relationships: [];
       };
-      cases: {
-        Row: {
-          id: string;
-          lab_id: string;
-          case_number: string;
-          patient_display: string;
-          doctor_id: string;
+	      cases: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_number: string;
+	          patient_display: string;
+	          patient_name: string | null;
+	          doctor_id: string;
           clinic_id: string;
           stage: ProductionStage;
+          current_stage?: ProductionStage;
+          status?: string;
           priority: CasePriority;
           restoration_type: string;
+          work_type?: string | null;
+          material?: string | null;
           shade: string | null;
           tooth_numbers: number[];
+          units_count?: number;
           due_date: string | null;
-          clinical_notes: string | null;
-          assigned_technician_id: string | null;
+          is_urgent?: boolean;
+          is_remake?: boolean;
+          is_warranty?: boolean;
+          requires_doctor_approval?: boolean;
+          missing_info_status?: string;
+          missing_info_fields?: Json;
+          priority_score?: number;
+          total_price?: number;
+          physical_impression_received?: boolean;
+          preparation_photo_received?: boolean;
+          implant_system?: string | null;
+          scan_body_info?: string | null;
+          bite_info?: string | null;
+          arch?: string | null;
+	          complexity?: string;
+	          clinical_notes: string | null;
+	          notes: string | null;
+	          assigned_technician_id: string | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -151,23 +222,400 @@ export type Database = {
         Insert: {
           id?: string;
           lab_id: string;
-          case_number: string;
-          patient_display: string;
-          doctor_id: string;
+	          case_number: string;
+	          patient_display: string;
+	          patient_name?: string | null;
+	          doctor_id: string;
           clinic_id: string;
           stage?: ProductionStage;
+          current_stage?: ProductionStage;
+          status?: string;
           priority?: CasePriority;
           restoration_type: string;
+          work_type?: string | null;
+          material?: string | null;
           shade?: string | null;
           tooth_numbers?: number[];
+          units_count?: number;
           due_date?: string | null;
-          clinical_notes?: string | null;
-          assigned_technician_id?: string | null;
+          is_urgent?: boolean;
+          is_remake?: boolean;
+          is_warranty?: boolean;
+          requires_doctor_approval?: boolean;
+          missing_info_status?: string;
+          missing_info_fields?: Json;
+          priority_score?: number;
+          total_price?: number;
+          physical_impression_received?: boolean;
+          preparation_photo_received?: boolean;
+          implant_system?: string | null;
+          scan_body_info?: string | null;
+          bite_info?: string | null;
+          arch?: string | null;
+	          complexity?: string;
+	          clinical_notes?: string | null;
+	          notes?: string | null;
+	          assigned_technician_id?: string | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["cases"]["Insert"]>;
+        Relationships: [];
+      };
+	      case_stage_logs: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_id: string;
+		          from_stage: ProductionStage | null;
+		          to_stage: ProductionStage;
+		          changed_by: string | null;
+		          moved_by: string | null;
+		          started_at: string | null;
+		          completed_at: string | null;
+		          delay_reason: string | null;
+		          notes: string | null;
+	          created_at: string;
+	        };
+	        Insert: {
+          id?: string;
+          lab_id: string;
+          case_id: string;
+		          from_stage?: ProductionStage | null;
+		          to_stage: ProductionStage;
+		          changed_by?: string | null;
+		          moved_by?: string | null;
+		          started_at?: string | null;
+		          completed_at?: string | null;
+		          delay_reason?: string | null;
+		          notes?: string | null;
+	          created_at?: string;
+	        };
+        Update: Partial<
+          Database["public"]["Tables"]["case_stage_logs"]["Insert"]
+        >;
+	        Relationships: [];
+	      };
+	      technicians: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          profile_id: string | null;
+	          display_name: string;
+	          phone: string | null;
+	          employment_status: string;
+	          productivity_score: number;
+	          created_at: string;
+	          updated_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          profile_id?: string | null;
+	          display_name: string;
+	          phone?: string | null;
+	          employment_status?: string;
+	          productivity_score?: number;
+	          created_at?: string;
+	          updated_at?: string;
+	        };
+	        Update: Partial<Database["public"]["Tables"]["technicians"]["Insert"]>;
+	        Relationships: [];
+	      };
+	      technician_skills: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          technician_id: string;
+	          skill: string;
+	          level: number;
+	          created_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          technician_id: string;
+	          skill: string;
+	          level?: number;
+	          created_at?: string;
+	        };
+	        Update: Partial<
+	          Database["public"]["Tables"]["technician_skills"]["Insert"]
+	        >;
+	        Relationships: [];
+	      };
+	      tasks: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_id: string;
+	          technician_id: string | null;
+	          stage: ProductionStage;
+	          status: string;
+	          title: string;
+	          instructions: string | null;
+	          started_at: string | null;
+	          due_at: string | null;
+	          completed_at: string | null;
+	          created_by: string | null;
+	          created_at: string;
+	          updated_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          case_id: string;
+	          technician_id?: string | null;
+	          stage: ProductionStage;
+	          status?: string;
+	          title: string;
+	          instructions?: string | null;
+	          started_at?: string | null;
+	          due_at?: string | null;
+	          completed_at?: string | null;
+	          created_by?: string | null;
+	          created_at?: string;
+	          updated_at?: string;
+	        };
+	        Update: Partial<Database["public"]["Tables"]["tasks"]["Insert"]>;
+	        Relationships: [];
+	      };
+	      quality_checks: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_id: string;
+	          checked_by: string | null;
+	          passed: boolean;
+	          result: string;
+	          notes: string | null;
+	          created_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          case_id: string;
+	          checked_by?: string | null;
+	          passed?: boolean;
+	          result?: string;
+	          notes?: string | null;
+	          created_at?: string;
+	        };
+	        Update: Partial<
+	          Database["public"]["Tables"]["quality_checks"]["Insert"]
+	        >;
+	        Relationships: [];
+	      };
+	      case_timeline: {
+        Row: {
+          id: string;
+          lab_id: string;
+	          case_id: string;
+	          actor_id: string | null;
+	          event_type: string;
+          title: string;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+	          case_id: string;
+	          actor_id?: string | null;
+	          event_type: string;
+          title: string;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["case_timeline"]["Insert"]
+        >;
+	        Relationships: [];
+	      };
+	      design_versions: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_id: string;
+	          version_no: number;
+	          version_number: number;
+	          exocad_project_ref: string | null;
+	          notes: string | null;
+	          submitted_by: string | null;
+	          uploaded_by: string | null;
+	          status: DesignStatus;
+	          preview_file_id: string | null;
+	          doctor_response: string | null;
+	          approval_decided_at: string | null;
+	          created_at: string;
+	          updated_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          case_id: string;
+	          version_no: number;
+	          version_number: number;
+	          exocad_project_ref?: string | null;
+	          notes?: string | null;
+	          submitted_by?: string | null;
+	          uploaded_by?: string | null;
+	          status?: DesignStatus;
+	          preview_file_id?: string | null;
+	          doctor_response?: string | null;
+	          approval_decided_at?: string | null;
+	          created_at?: string;
+	          updated_at?: string;
+	        };
+	        Update: Partial<
+	          Database["public"]["Tables"]["design_versions"]["Insert"]
+	        >;
+	        Relationships: [];
+	      };
+	      design_approvals: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          case_id: string;
+	          design_version_id: string;
+	          doctor_id: string;
+	          status: string;
+	          comment: string | null;
+	          requested_at: string;
+	          decided_at: string | null;
+	          created_at: string;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          case_id: string;
+	          design_version_id: string;
+	          doctor_id: string;
+	          status?: string;
+	          comment?: string | null;
+	          requested_at?: string;
+	          decided_at?: string | null;
+	          created_at?: string;
+	        };
+	        Update: Partial<
+	          Database["public"]["Tables"]["design_approvals"]["Insert"]
+	        >;
+	        Relationships: [];
+	      };
+	      notifications: {
+	        Row: {
+	          id: string;
+	          lab_id: string;
+	          recipient_id: string | null;
+	          case_id: string | null;
+	          title: string;
+	          body: string | null;
+	          status: string;
+	          metadata: Json;
+	          created_at: string;
+	          read_at: string | null;
+	        };
+	        Insert: {
+	          id?: string;
+	          lab_id: string;
+	          recipient_id?: string | null;
+	          case_id?: string | null;
+	          title: string;
+	          body?: string | null;
+	          status?: string;
+	          metadata?: Json;
+	          created_at?: string;
+	          read_at?: string | null;
+	        };
+	        Update: Partial<
+	          Database["public"]["Tables"]["notifications"]["Insert"]
+	        >;
+	        Relationships: [];
+	      };
+	      doctor_price_lists: {
+        Row: {
+          id: string;
+          lab_id: string;
+          doctor_id: string | null;
+          clinic_id: string | null;
+          work_type: string;
+          material: string | null;
+          unit_price: number;
+          is_active: boolean;
+          effective_from: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          doctor_id?: string | null;
+          clinic_id?: string | null;
+          work_type: string;
+          material?: string | null;
+          unit_price: number;
+          is_active?: boolean;
+          effective_from?: string;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["doctor_price_lists"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      invoices: {
+        Row: {
+          id: string;
+          lab_id: string;
+          doctor_id: string;
+          clinic_id: string | null;
+          invoice_number: string;
+          status: string;
+          subtotal: number;
+          discount: number;
+          tax: number;
+          total: number;
+          paid_amount: number;
+          remaining_balance: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          doctor_id: string;
+          clinic_id?: string | null;
+          invoice_number: string;
+          status?: string;
+          subtotal?: number;
+          discount?: number;
+          tax?: number;
+          paid_amount?: number;
+          remaining_balance?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["invoices"]["Insert"]>;
+        Relationships: [];
+      };
+      payments: {
+        Row: {
+          id: string;
+          lab_id: string;
+          invoice_id: string | null;
+          doctor_id: string | null;
+          amount: number;
+          paid_at: string;
+        };
+        Insert: {
+          id?: string;
+          lab_id: string;
+          invoice_id?: string | null;
+          doctor_id?: string | null;
+          amount: number;
+          paid_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["payments"]["Insert"]>;
         Relationships: [];
       };
       case_files: {
@@ -176,28 +624,38 @@ export type Database = {
           lab_id: string;
           case_id: string;
           design_version_id: string | null;
-          bucket: string;
-          storage_path: string;
-          file_kind: IntakeFileType;
-          file_name: string;
-          mime_type: string | null;
-          size_bytes: number | null;
-          uploaded_by: string | null;
-          created_at: string;
-        };
+	          bucket: string;
+	          storage_path: string;
+	          category: CaseFileCategory;
+	          file_path: string;
+	          file_kind: IntakeFileType;
+	          file_type: IntakeFileType;
+	          file_name: string;
+	          mime_type: string | null;
+	          size_bytes: number | null;
+	          file_size: number | null;
+	          visibility: CaseFileVisibility;
+	          uploaded_by: string | null;
+	          created_at: string;
+	        };
         Insert: {
           id?: string;
           lab_id: string;
           case_id: string;
-          design_version_id?: string | null;
-          bucket?: string;
-          storage_path: string;
-          file_kind: IntakeFileType;
-          file_name: string;
-          mime_type?: string | null;
-          size_bytes?: number | null;
-          uploaded_by?: string | null;
-          created_at?: string;
+	          design_version_id?: string | null;
+	          bucket?: string;
+	          storage_path: string;
+	          category?: CaseFileCategory;
+	          file_path?: string;
+	          file_kind: IntakeFileType;
+	          file_type?: IntakeFileType;
+	          file_name: string;
+	          mime_type?: string | null;
+	          size_bytes?: number | null;
+	          file_size?: number | null;
+	          visibility?: CaseFileVisibility;
+	          uploaded_by?: string | null;
+	          created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["case_files"]["Insert"]>;
         Relationships: [];

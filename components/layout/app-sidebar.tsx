@@ -2,15 +2,21 @@ import Link from "next/link";
 import { Activity } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { appNavigation } from "@/lib/constants/navigation";
+import type { AppRole } from "@/lib/constants/roles";
+import { hasRole } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
 export function AppSidebar({
   labName,
   activeHref = "/dashboard",
+  roles,
 }: {
   labName: string;
   activeHref?: string;
+  roles: AppRole[];
 }) {
+  const navigation = appNavigation.filter((item) => hasRole(roles, item.roles));
+
   return (
     <aside className="fixed inset-y-0 start-0 hidden w-64 border-e bg-card lg:block">
       <div className="flex h-full flex-col">
@@ -25,7 +31,7 @@ export function AppSidebar({
         </div>
         <Separator />
         <nav className="flex-1 space-y-1 p-3">
-          {appNavigation.map((item) => {
+          {navigation.map((item) => {
             const active = activeHref === item.href;
 
             return (
